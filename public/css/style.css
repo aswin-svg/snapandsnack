@@ -1168,3 +1168,18 @@ html.dark .post-h2, html.dark .post-h3 { color: #e8e0d8; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .toggle-track.on .toggle-thumb { transform: translateX(22px); }
+
+/* ─── Round share buttons ────────────────────────────────────────── */
+.share-btns-new { display:flex; gap:12px; align-items:center; }
+.share-circle {
+  width:46px; height:46px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; transition:transform 0.2s, box-shadow 0.2s;
+  border:none; font-size:20px; text-decoration:none;
+}
+.share-circle:hover { transform:translateY(-3px); box-shadow:0 6px 20px rgba(0,0,0,0.15); }
+.share-twitter { background:#000; color:#fff; }
+.share-facebook { background:#1877f2; color:#fff; }
+.share-whatsapp { background:#25d366; color:#fff; }
+.share-copy { background:var(--cream); color:var(--ink); border:1.5px solid var(--border); }
+.share-copy.copied { background:#22c55e; color:#fff; border-color:#22c55e; }
