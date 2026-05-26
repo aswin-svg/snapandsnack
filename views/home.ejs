@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snap & Snack — Travel, Food & Lifestyle</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snack</span></a>
+      <div class="nav-links">
+        <a href="/" class="active">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+    </div>
+  </nav>
+
+  <!-- ░░ HERO ░░ -->
+   <section class="hero">
+    <div class="container">
+      <p class="hero-eyebrow">📷 Travel · Food · Lifestyle</p>
+      <h1>Eat the world,<br><em>photograph everything.</em></h1>
+      <p class="hero-sub">A travel diary full of good food, beautiful places, and honest stories from the road.</p>
+      <div class="hero-cats">
+        <a href="/blog?category=Travel">✈️ Travel</a>
+        <a href="/blog?category=Food">🍜 Food</a>
+        <a href="/blog?category=Lifestyle">🌿 Lifestyle</a>
+        <a href="/gallery">📸 Gallery</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ░░ STATS STRIP ░░ -->
+  <section class="stats-strip">
+    <div class="container stats-strip-inner">
+      <div class="stat-item">
+        <span class="stat-number"><%= posts.length %>+</span>
+        <span class="stat-text">Stories written</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number"><%= categories.length %>+</span>
+        <span class="stat-text">Topics covered</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number"><%= latestPhotos.length %>+</span>
+        <span class="stat-text">Photos shared</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat-item">
+        <span class="stat-number">∞</span>
+        <span class="stat-text">Adventures ahead</span>
+      </div>
+    </div>
+  </section>
+
+   <!-- ░░ ABOUT STRIP ░░ -->
+  <section class="about-strip">
+    <div class="container about-strip-inner">
+      <div class="about-strip-img">
+        <img src="/me.jpg" alt="Anish" class="about-avatar" style="object-fit:cover">
+      </div>
+      <div class="about-strip-text">
+        <p class="about-strip-label">Hey, I'm NonChalant 👋</p>
+        <h2>A traveller who eats first,<br>asks questions later.</h2>
+        <p>I travel the world with a camera in one hand and a fork in the other. This blog is my diary — honest stories, real food, and photos from places I never want to forget.</p>
+        <a href="/about" class="read-btn" style="margin-top:1rem;display:inline-flex">Read my story →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ░░ FEATURED POST ░░ -->
+  <% const featured = posts[0]; %>
+  <% if (featured) { %>
+  <section class="featured-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">✨ Latest Story</h2>
+        <a href="/blog">View all →</a>
+      </div>
+      <div class="featured-card">
+        <% if (featured.image) { %>
+          <img src="<%= featured.image %>" alt="<%= featured.title %>" class="featured-img">
+        <% } else { %>
+          <div class="featured-img-placeholder">📷</div>
+        <% } %>
+        <div class="featured-body">
+          <p class="featured-label">Most recent post</p>
+          <h2><a href="/post/<%= featured.slug %>"><%= featured.title %></a></h2>
+          <p class="featured-excerpt"><%= featured.content.substring(0, 220) %>...</p>
+          <p class="featured-meta">
+            <span class="cat-badge cat-<%= featured.category.toLowerCase() %>"><%= featured.category %></span>
+            <span style="margin-left:0.5rem"><%= featured.date %></span>
+          </p>
+          <a href="/post/<%= featured.slug %>" class="read-btn">Read article →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ░░ RECENT POSTS GRID ░░ -->
+  <section class="posts-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Recent Posts</h2>
+        <a href="/blog">View all →</a>
+      </div>
+      <% const recent = posts.slice(1, 7); %>
+      <% if (posts.length === 0) { %>
+        <div class="empty-state">
+          <div class="empty-icon">✍️</div>
+          <p>No posts yet — go create your first one!</p>
+          <a href="/admin/new" class="btn btn-accent">Create post</a>
+        </div>
+      <% } else { %>
+        <div class="posts-grid">
+          <% (recent.length > 0 ? recent : posts.slice(0,6)).forEach(post => { %>
+            <article class="post-card">
+              <% if (post.image) { %>
+                <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img"></a>
+              <% } else { %>
+                <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
+              <% } %>
+              <div class="post-card-body">
+                <% if (post.pinned) { %><span class="pinned-badge">📌 Pinned</span><% } %>
+                <span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span>
+                <h3><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
+                <p class="post-card-excerpt"><%= post.content.substring(0, 110) %>...</p>
+                <div class="post-card-footer">
+                  <span class="post-date"><%= post.date %></span>
+                  <% if (post.views) { %><span class="post-card-views">👁️ <%= post.views %></span><% } %>
+                  <a href="/post/<%= post.slug %>" class="post-link">Read →</a>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+
+
+  <!-- ░░ GALLERY STRIP ░░ -->
+  <% if (latestPhotos.length > 0) { %>
+  <section class="gallery-strip-section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">📷 From the Gallery</h2>
+        <a href="/gallery">View all →</a>
+      </div>
+      <div class="gallery-strip">
+        <% latestPhotos.forEach(photo => { %>
+          <a href="/gallery" class="gallery-strip-item">
+            <img src="<%= photo.src %>" alt="<%= photo.caption || 'Travel photo' %>">
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- ░░ WHAT YOU'LL FIND ░░ -->
+  <section class="what-section">
+    <div class="container">
+      <h2 class="section-title" style="text-align:center;margin-bottom:2rem">What you'll find here</h2>
+      <div class="what-grid">
+        <div class="what-card">
+          <div class="what-icon">✈️</div>
+          <h3>Travel Stories</h3>
+          <p>Real experiences from real trips — the good, the chaotic, and the beautiful.</p>
+          <a href="/blog?category=Travel" class="what-link">Explore →</a>
+        </div>
+        <div class="what-card">
+          <div class="what-icon">🍜</div>
+          <h3>Food Adventures</h3>
+          <p>Street food, local restaurants, and every delicious thing I eat along the way.</p>
+          <a href="/blog?category=Food" class="what-link">Explore →</a>
+        </div>
+        <div class="what-card">
+          <div class="what-icon">📷</div>
+          <h3>Photography</h3>
+          <p>Moments captured from around the world — one photo at a time.</p>
+          <a href="/gallery" class="what-link">View gallery →</a>
+        </div>
+        <div class="what-card">
+          <div class="what-icon">🌿</div>
+          <h3>Lifestyle</h3>
+          <p>Tips, thoughts, and honest stories about life on and off the road.</p>
+          <a href="/blog?category=Lifestyle" class="what-link">Explore →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Back to top & dark mode -->
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-logo">Snap &amp; <span>Snack</span></div>
+          <p class="footer-desc">A travel, food & lifestyle blog. Eating well and photographing everything along the way.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Pages</div>
+          <div class="footer-links">
+            <a href="/">Home</a><a href="/blog">Blog</a>
+            <a href="/gallery">Gallery</a><a href="/about">About</a>
+            <a href="/contact">Contact</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Categories</div>
+          <div class="footer-links">
+            <a href="/blog?category=Travel">✈️ Travel</a>
+            <a href="/blog?category=Food">🍜 Food</a>
+            <a href="/blog?category=Lifestyle">🌿 Lifestyle</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack · Built with Node.js</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark);
+  document.getElementById('dark-toggle').classList.toggle('on', isDark);
+  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+}
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark');
+  document.getElementById('dark-toggle').classList.add('on');
+  document.getElementById('toggle-thumb').textContent = '🌙';
+}
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Snap & Snack Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/" target="_blank" class="btn btn-outline btn-sm">View site ↗</a>
+        <a href="/admin/password" class="btn btn-outline btn-sm">🔑 Password</a>
+        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-main">
+    <div style="margin-bottom:1.5rem">
+      <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.25rem">Dashboard</h1>
+      <p style="color:#6b7280;font-size:0.9rem">Welcome back! Here's your blog overview.</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="dashboard-stats">
+      <div class="stat-card">
+        <div class="stat-num"><%= posts.length %></div>
+        <div class="stat-label">Published posts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num"><%= drafts.length %></div>
+        <div class="stat-label">Drafts</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num"><%= photoCount %></div>
+        <div class="stat-label">Gallery photos</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="window.location='/admin/messages'">
+        <div class="stat-num"><%= unreadMessages %></div>
+        <div class="stat-label">Unread messages</div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="dashboard-actions">
+      <a href="/admin/new" class="btn btn-accent">+ New post</a>
+      <a href="/admin/gallery" class="btn btn-outline">📷 Gallery</a>
+      <a href="/admin/messages" class="btn btn-outline">
+        📩 Messages
+        <% if (unreadMessages > 0) { %><span style="background:#c9622f;color:#fff;border-radius:20px;padding:1px 7px;font-size:0.75rem;margin-left:4px"><%= unreadMessages %></span><% } %>
+      </a>
+    </div>
+
+    <!-- Drafts section -->
+    <% if (drafts.length > 0) { %>
+      <div class="section-heading" style="margin-bottom:0.75rem">📝 Drafts</div>
+      <div class="admin-table" style="margin-bottom:2rem">
+        <div class="table-head">
+          <span>Title</span><span>Category</span><span>Date</span><span>Actions</span>
+        </div>
+        <% drafts.forEach(post => { %>
+          <div class="table-row">
+            <span class="row-title">
+              <span style="background:#fef3c7;color:#92400e;font-size:0.7rem;padding:1px 6px;border-radius:4px;margin-right:6px">DRAFT</span>
+              <%= post.title %>
+            </span>
+            <span><span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span></span>
+            <span class="row-date"><%= post.date %></span>
+            <span class="row-actions">
+              <a href="/admin/edit/<%= post.id %>" class="btn btn-outline btn-sm">Edit</a>
+              <form method="POST" action="/admin/publish/<%= post.id %>" style="display:inline">
+                <button type="submit" class="btn btn-sm" style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7">Publish</button>
+              </form>
+              <form method="POST" action="/admin/delete/<%= post.id %>" style="display:inline" onsubmit="return confirm('Delete this draft?')">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Published posts -->
+    <div class="section-heading" style="margin-bottom:0.75rem">✅ Published posts</div>
+    <% if (posts.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">✍️</div>
+        <p>No published posts yet.</p>
+        <a href="/admin/new" class="btn btn-accent">Create post</a>
+      </div>
+    <% } else { %>
+      <div class="admin-table">
+        <div class="table-head">
+          <span>Title</span><span>Category</span><span>Date</span><span>Actions</span>
+        </div>
+        <% posts.forEach(post => { %>
+          <div class="table-row">
+            <span class="row-title"><a href="/post/<%= post.slug %>" target="_blank"><%= post.title %></a></span>
+            <span><span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span></span>
+            <span class="row-date"><%= post.date %></span>
+            <span class="row-actions">
+              <a href="/admin/edit/<%= post.id %>" class="btn btn-outline btn-sm">Edit</a>
+              <% if (post.pinned) { %>
+                <form method="POST" action="/admin/unpin/<%= post.id %>" style="display:inline">
+                  <button type="submit" class="btn btn-sm" style="background:#fef9c3;color:#854d0e;border:1px solid #fde047" title="Unpin post">📌 Pinned</button>
+                </form>
+              <% } else { %>
+                <form method="POST" action="/admin/pin/<%= post.id %>" style="display:inline">
+                  <button type="submit" class="btn btn-outline btn-sm" title="Pin to top">📌 Pin</button>
+                </form>
+              <% } %>
+              <form method="POST" action="/admin/delete/<%= post.id %>" style="display:inline" onsubmit="return confirm('Delete this post?')">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Comments -->
+    <div class="section-heading" style="margin-top:2rem;margin-bottom:0.75rem">💬 Recent Comments</div>
+    <% let hasComments = false; %>
+    <% posts.forEach(post => { %>
+      <% if (post.comments && post.comments.length > 0) { %>
+        <% hasComments = true; %>
+        <div class="admin-table" style="margin-bottom:1rem">
+          <div style="padding:0.75rem 1.25rem;background:#f9fafb;border-bottom:1px solid #e5e7eb;font-size:0.85rem;font-weight:600;color:#374151">
+            📄 <%= post.title %>
+          </div>
+          <% post.comments.forEach(comment => { %>
+            <div class="table-row" style="grid-template-columns:auto 1fr auto">
+              <div class="comment-avatar" style="width:32px;height:32px;font-size:0.85rem"><%= comment.name.charAt(0).toUpperCase() %></div>
+              <div>
+                <div style="font-size:0.9rem;font-weight:500"><%= comment.name %> <span style="color:#9ca3af;font-weight:300;font-size:0.8rem">· <%= comment.date %></span></div>
+                <div style="font-size:0.85rem;color:#6b7280"><%= comment.comment %></div>
+              </div>
+              <form method="POST" action="/admin/comment/delete/<%= post.id %>/<%= comment.id %>" onsubmit="return confirm('Delete this comment?')">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    <% }) %>
+    <% if (!hasComments) { %>
+      <div style="color:#9ca3af;font-size:0.9rem;padding:1rem 0">No comments yet.</div>
+    <% } %>
+
+  </div>
+</body>
+</html>

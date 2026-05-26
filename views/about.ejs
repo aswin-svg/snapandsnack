@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Snap & Snack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snack</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about" class="active">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <<div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+    </div>
+  </nav>
+
+  <div class="container-sm">
+
+    <div class="about-page-header">
+      <img src="/me.jpg" alt="Anish" class="about-page-avatar" style="object-fit:cover">
+      <h1>Hey, I'm NonChalant!</h1>
+      <p class="about-page-sub">Traveller · Food lover · Photographer</p>
+    </div>
+
+    <div class="about-page-body">
+
+      <div class="about-block">
+        <h2>My story</h2>
+        <p>I'm a traveller who believes the best way to understand a place is through its food. I pick up my camera, hop on a plane (or a bus, or a tuk-tuk), and go looking for the real story behind every destination.</p>
+        <p>This blog started as a personal diary and turned into something I actually share with the world. Every post here is a real experience — no filters, no pretending everything was perfect.</p>
+      </div>
+
+      <div class="about-block">
+        <h2>What I do</h2>
+        <div class="about-cards">
+          <div class="about-feat">
+            <span>✈️</span>
+            <div>
+              <strong>Travel</strong>
+              <p>I go wherever curiosity takes me — mountains, cities, beaches, street markets.</p>
+            </div>
+          </div>
+          <div class="about-feat">
+            <span>🍜</span>
+            <div>
+              <strong>Eat everything</strong>
+              <p>Street food, local spots, hole-in-the-wall places. If locals eat there, I'm in.</p>
+            </div>
+          </div>
+          <div class="about-feat">
+            <span>📷</span>
+            <div>
+              <strong>Photograph moments</strong>
+              <p>I try to capture the feeling of a place, not just how it looks.</p>
+            </div>
+          </div>
+          <div class="about-feat">
+            <span>✍️</span>
+            <div>
+              <strong>Write honestly</strong>
+              <p>Real stories — what went wrong, what surprised me, what I'd do again.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="about-block">
+        <h2>Why Snap & Snack?</h2>
+        <p>Because every trip has two things in common — I always have my camera, and I'm always hungry. The name felt right the moment I thought of it. 😄</p>
+      </div>
+
+      <div class="about-block">
+        <h2>Get in touch</h2>
+        <p>Have a question, a recommendation, or just want to say hi? I'd love to hear from you!</p>
+        <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
+          <a href="/blog" class="read-btn">Read my posts →</a>
+          <a href="/gallery" class="btn btn-outline">See my photos</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  <!-- Dark mode toggle -->
+  
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark);
+  document.getElementById('dark-toggle').classList.toggle('on', isDark);
+  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+}
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark');
+  document.getElementById('dark-toggle').classList.add('on');
+  document.getElementById('toggle-thumb').textContent = '🌙';
+}
+  </script>
+
+</body>
+</html>

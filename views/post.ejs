@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post.title %> — Snap & Snack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snack</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+    </div>
+  </nav>
+
+  <div class="container-sm">
+    <a href="/blog" class="back-link">← Back to blog</a>
+
+    <div class="post-header">
+      <div class="post-meta-row">
+        <span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span>
+        <span class="post-date"><%= post.date %></span>
+        <span class="post-read-time">⏱️ <%= readTime %> min read</span>
+        <span class="post-views">👁️ <%= post.views || 1 %> views</span>
+      </div>
+      <h1><%= post.title %></h1>
+      <% if (post.tags.length > 0) { %>
+        <div class="post-tags" style="justify-content:center">
+          <% post.tags.forEach(t => { %><span class="tag">#<%= t %></span><% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <% if (post.image) { %>
+      <img src="<%= post.image %>" alt="<%= post.title %>" class="post-hero-img">
+    <% } %>
+
+    <div class="post-body"><%- renderContent(post.content) %></div>
+
+    <div class="share-row">
+      <span class="share-label">Share:</span>
+      <a href="https://twitter.com/intent/tweet?text=<%= encodeURIComponent(post.title) %>" target="_blank" class="share-btn">Twitter</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent('http://localhost:3000/post/' + post.slug) %>" target="_blank" class="share-btn">Facebook</a>
+      <button class="share-btn" onclick="navigator.clipboard.writeText(window.location.href);this.textContent='Copied!'">Copy link</button>
+    </div>
+
+    <!-- ░░ COMMENTS SECTION ░░ -->
+    <div class="comments-section">
+      <h2 class="comments-title">
+        💬 Comments
+        <span class="comments-count"><%= post.comments ? post.comments.length : 0 %></span>
+      </h2>
+
+      <!-- Comment form -->
+      <form class="comment-form" method="POST" action="/post/<%= post.slug %>/comment">
+        <div class="comment-form-row">
+          <div class="form-group">
+            <label>Your name *</label>
+            <input type="text" name="name" placeholder="e.g. Sarah" required>
+          </div>
+          <div class="form-group">
+            <label>Email <span style="color:var(--muted);font-weight:300">(not shown publicly)</span></label>
+            <input type="email" name="email" placeholder="your@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Comment *</label>
+          <textarea name="comment" rows="4" placeholder="Share your thoughts..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-accent">Post comment →</button>
+      </form>
+
+      <!-- Comments list -->
+      <% if (post.comments && post.comments.length > 0) { %>
+        <div class="comments-list">
+          <% post.comments.slice().reverse().forEach(c => { %>
+            <div class="comment-card">
+              <div class="comment-header">
+                <div class="comment-avatar"><%= c.name.charAt(0).toUpperCase() %></div>
+                <div>
+                  <div class="comment-name"><%= c.name %></div>
+                  <div class="comment-date"><%= c.date %></div>
+                </div>
+              </div>
+              <p class="comment-body"><%= c.comment %></p>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="no-comments">No comments yet — be the first! 👆</div>
+      <% } %>
+    </div>
+
+    <!-- Related posts -->
+    <% if (related.length > 0) { %>
+      <div class="related-section">
+        <h2 class="section-title">More in <%= post.category %></h2>
+        <div class="posts-grid">
+          <% related.forEach(r => { %>
+            <article class="post-card">
+              <% if (r.image) { %>
+                <a href="/post/<%= r.slug %>"><img src="<%= r.image %>" alt="<%= r.title %>" class="post-card-img"></a>
+              <% } else { %>
+                <a href="/post/<%= r.slug %>"><div class="post-card-img-placeholder">📷</div></a>
+              <% } %>
+              <div class="post-card-body">
+                <span class="cat-badge cat-<%= r.category.toLowerCase() %>"><%= r.category %></span>
+                <h3><a href="/post/<%= r.slug %>"><%= r.title %></a></h3>
+                <div class="post-card-footer">
+                  <span class="post-date"><%= r.date %></span>
+                  <a href="/post/<%= r.slug %>" class="post-link">Read →</a>
+                </div>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  <!-- Dark mode toggle -->
+  
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark);
+  document.getElementById('dark-toggle').classList.toggle('on', isDark);
+  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+}
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark');
+  document.getElementById('dark-toggle').classList.add('on');
+  document.getElementById('toggle-thumb').textContent = '🌙';
+}
+  </script>
+
+</body>
+</html>

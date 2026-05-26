@@ -1,0 +1,230 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata&display=swap');
+
+/* ─── Portfolio Grid ─────────────────────────────────────────────── */
+.portfolio {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 4rem;
+}
+
+.project {
+  position: relative;
+  overflow: hidden;
+  background: #f2dad7;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+}
+
+/* Photo fills the box */
+.project__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.92;
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.project:hover .project__image {
+  transform: scale(1.05);
+  opacity: 0.7;
+}
+
+/* Top tag */
+.project__tag {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0.65em 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 0.72rem;
+  font-family: 'Inconsolata', monospace;
+  color: #fff;
+  z-index: 2;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.45), transparent);
+  margin: 0;
+}
+
+/* Bottom title */
+.project__title {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  padding: 0.6em 0.5em;
+  font-size: 0.72rem;
+  font-weight: 400;
+  font-family: 'Inconsolata', monospace;
+  z-index: 2;
+  text-transform: uppercase;
+  color: #fff;
+  letter-spacing: 2px;
+  background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Hover overlay — slides up from bottom */
+.grid__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(180, 100, 80, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(101%);
+  transition: transform 0.35s ease-in-out;
+  z-index: 4;
+}
+
+.project:hover .grid__overlay {
+  transform: translateY(0%);
+}
+
+.view-btn {
+  background: none;
+  outline: none;
+  font-family: 'Inconsolata', monospace;
+  font-weight: 400;
+  letter-spacing: 3px;
+  border: 1px solid #fff;
+  color: #fff;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn:hover {
+  background: #fff;
+  color: #c9622f;
+  transform: scale(1.05);
+}
+
+/* ─── Lightbox ───────────────────────────────────────────────────── */
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(30, 20, 15, 0.92);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.lightbox-overlay.open {
+  display: flex;
+}
+.lightbox-inner {
+  position: relative;
+  max-width: 860px;
+  width: 100%;
+  background: #1a1210;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.lightbox-inner img {
+  width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  display: block;
+}
+.lightbox-caption {
+  padding: 0.85rem 1rem;
+  font-family: 'Inconsolata', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #a09080;
+  text-align: center;
+}
+.lightbox-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 1.4rem;
+  color: #fff;
+  cursor: pointer;
+  background: none;
+  border: none;
+  z-index: 10;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+.lightbox-close:hover { opacity: 1; }
+
+/* ─── Filter bar ─────────────────────────────────────────────────── */
+.gallery-filter-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.gallery-filter-btn {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--warm-white);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--sans);
+}
+.gallery-filter-btn:hover,
+.gallery-filter-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.gallery-search-box {
+  margin-left: auto;
+}
+.gallery-search-box input {
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: var(--sans);
+  background: var(--warm-white);
+  color: var(--ink);
+  width: 180px;
+  transition: border-color 0.15s;
+}
+.gallery-search-box input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .portfolio { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 640px) {
+  .portfolio { grid-template-columns: repeat(2, 1fr); gap: 3px; }
+  .gallery-search-box { margin-left: 0; width: 100%; }
+  .gallery-search-box input { width: 100%; }
+}
+@media (max-width: 380px) {
+  .portfolio { grid-template-columns: 1fr 1fr; }
+}
+
+/* ─── Dark mode ──────────────────────────────────────────────────── */
+html.dark .project { background: #2a1f1a; }
+html.dark .gallery-filter-btn { background: #1a1814; border-color: #2c2820; color: #a09890; }
+html.dark .gallery-search-box input { background: #1a1814; border-color: #2c2820; color: #e8e0d8; }
+html.dark .lightbox-inner { background: #0d0a08; }

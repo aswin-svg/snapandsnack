@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blog — Snap & Snack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snack</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog" class="active">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="blog-header">
+      <h1>All Posts</h1>
+      <p style="color:var(--muted);font-weight:300"><%= posts.length %> article<%= posts.length !== 1 ? 's' : '' %></p>
+    </div>
+
+    <div class="blog-filters">
+      <a href="/blog" class="filter-btn <%= activeCategory === '' && search === '' ? 'active' : '' %>">All</a>
+      <% categories.forEach(cat => { %>
+        <a href="/blog?category=<%= cat %>" class="filter-btn <%= activeCategory === cat ? 'active' : '' %>"><%= cat %></a>
+      <% }) %>
+      <form class="search-box" method="GET" action="/blog">
+        <input type="text" name="search" placeholder="Search posts..." value="<%= search %>">
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <% if (posts.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <p>No posts found<% if (search) { %> for "<%= search %>"<% } %><% if (activeCategory) { %> in <%= activeCategory %><% } %>.</p>
+        <a href="/blog" class="btn btn-outline">Clear filters</a>
+      </div>
+    <% } else { %>
+      <div class="posts-grid" style="padding-bottom:4rem">
+        <% posts.forEach(post => { %>
+          <article class="post-card">
+            <% if (post.image) { %>
+              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img"></a>
+            <% } else { %>
+              <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
+            <% } %>
+            <div class="post-card-body">
+              <span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span>
+              <h3><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
+              <p class="post-card-excerpt"><%= post.content.substring(0, 130) %>...</p>
+              <% if (post.tags.length > 0) { %>
+                <div class="post-tags" style="margin-bottom:0.75rem">
+                  <% post.tags.slice(0,3).forEach(t => { %><span class="tag">#<%= t %></span><% }) %>
+                </div>
+              <% } %>
+              <div class="post-card-footer">
+                <span class="post-date"><%= post.date %></span>
+                <a href="/post/<%= post.slug %>" class="post-link">Read →</a>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Back to top -->
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  <!-- Dark mode toggle -->
+  
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark);
+  document.getElementById('dark-toggle').classList.toggle('on', isDark);
+  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+}
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark');
+  document.getElementById('dark-toggle').classList.add('on');
+  document.getElementById('toggle-thumb').textContent = '🌙';
+}
+  </script>
+</body>
+</html>

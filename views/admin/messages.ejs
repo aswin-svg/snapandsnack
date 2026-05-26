@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Messages — Snap & Snack Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
+        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-main">
+    <div style="margin-bottom:1.5rem">
+      <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.25rem">📩 Contact Messages</h1>
+      <p style="color:#6b7280;font-size:0.9rem"><%= messages.length %> message<%= messages.length !== 1 ? 's' : '' %> received</p>
+    </div>
+
+    <% if (messages.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No messages yet.</p>
+      </div>
+    <% } else { %>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <% messages.forEach(msg => { %>
+          <div class="message-card">
+            <div class="message-header">
+              <div class="comment-avatar" style="background:#5a67d8"><%= msg.name.charAt(0).toUpperCase() %></div>
+              <div style="flex:1">
+                <div style="font-weight:600;color:#1a1a1a"><%= msg.name %></div>
+                <div style="font-size:0.82rem;color:#6b7280"><%= msg.email %> · <%= msg.date %></div>
+              </div>
+              <form method="POST" action="/admin/messages/delete/<%= msg.id %>" onsubmit="return confirm('Delete this message?')">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
+            <p class="message-body"><%= msg.message %></p>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+</body>
+</html>

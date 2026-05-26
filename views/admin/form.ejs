@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= post ? 'Edit Post' : 'New Post' %> — Snap & Snack Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .editor-toolbar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      padding: 8px 10px;
+      background: #f9fafb;
+      border: 1px solid #d1d5db;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+    }
+    .editor-toolbar button {
+      padding: 5px 10px; font-size: 13px;
+      border: 1px solid #d1d5db; border-radius: 5px;
+      background: #fff; color: #374151;
+      cursor: pointer; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .editor-toolbar button:hover { background: #f3f4f6; border-color: #9ca3af; }
+    .editor-toolbar .sep { width: 1px; background: #e5e7eb; margin: 0 2px; }
+    .editor-toolbar .insert-img-btn {
+      background: #f5ede6; color: #c9622f;
+      border-color: #f0cdb8;
+    }
+    .editor-toolbar .insert-img-btn:hover { background: #f0cdb8; }
+    #content {
+      border-radius: 0 0 8px 8px !important;
+      border-top: none !important;
+    }
+    .inline-upload-area {
+      background: #f9fafb;
+      border: 1.5px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .inline-upload-area.open { display: block; }
+    .inline-upload-area label { font-size: 0.85rem; font-weight: 500; color: #374151; display: block; margin-bottom: 0.5rem; }
+    .inline-upload-area input { font-size: 0.85rem; }
+    .inline-upload-area p { font-size: 0.8rem; color: #9ca3af; margin-top: 0.4rem; }
+    .uploaded-inline-imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.75rem; }
+    .uploaded-inline-img {
+      display: flex; align-items: center; gap: 6px;
+      background: #fff; border: 1px solid #e5e7eb;
+      border-radius: 6px; padding: 5px 8px; font-size: 12px;
+      color: #374151;
+    }
+    .uploaded-inline-img img { height: 32px; width: 32px; object-fit: cover; border-radius: 4px; }
+    .uploaded-inline-img button {
+      background: none; border: none; color: #9ca3af;
+      cursor: pointer; font-size: 14px; padding: 0;
+    }
+    .hint-box {
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 6px; padding: 8px 12px;
+      font-size: 0.8rem; color: #1e40af; margin-top: 6px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
+        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+      <h1 style="font-size:1.5rem;font-weight:600"><%= post ? 'Edit Post' : 'Create New Post' %></h1>
+      <% if (post && post.status === 'draft') { %>
+        <span style="background:#fef3c7;color:#92400e;font-size:0.8rem;padding:0.3rem 0.85rem;border-radius:20px;font-weight:500">📝 Draft</span>
+      <% } else if (post) { %>
+        <span style="background:#d1fae5;color:#065f46;font-size:0.8rem;padding:0.3rem 0.85rem;border-radius:20px;font-weight:500">✅ Published</span>
+      <% } %>
+    </div>
+
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+
+    <form method="POST" action="<%= post ? '/admin/edit/' + post.id : '/admin/new' %>" enctype="multipart/form-data" class="form-card" id="post-form">
+
+      <div class="form-group">
+        <label>Post title *</label>
+        <input type="text" name="title" placeholder="e.g. The Best Street Food in Bangkok" required value="<%= post ? post.title : '' %>">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Category</label>
+          <select name="category">
+            <% ['Travel','Food','Lifestyle'].forEach(cat => { %>
+              <option value="<%= cat %>" <%= post && post.category === cat ? 'selected' : '' %>><%= cat %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tags <span class="form-hint">(comma separated)</span></label>
+          <input type="text" name="tags" placeholder="e.g. thailand, street food, asia" value="<%= post ? post.tags.join(', ') : '' %>">
+        </div>
+      </div>
+
+      <!-- ░░ EDITOR WITH TOOLBAR ░░ -->
+      <div class="form-group">
+        <label>Content *</label>
+
+        <!-- Toolbar -->
+        <div class="editor-toolbar">
+          <button type="button" onclick="insertTag('**','**')" title="Bold"><b>B</b></button>
+          <button type="button" onclick="insertTag('*','*')" title="Italic"><i>I</i></button>
+          <div class="sep"></div>
+          <button type="button" onclick="insertLine('## ')" title="Heading">H2</button>
+          <button type="button" onclick="insertLine('### ')" title="Subheading">H3</button>
+          <div class="sep"></div>
+          <button type="button" onclick="insertLine('> ')" title="Quote">❝ Quote</button>
+          <button type="button" onclick="insertLine('---')" title="Divider">— Line</button>
+          <div class="sep"></div>
+          <button type="button" class="insert-img-btn" onclick="toggleInlineUpload()">📷 Insert image</button>
+        </div>
+
+        <textarea id="content" name="content" rows="16" placeholder="Write your story here...
+
+Tips:
+**bold text**
+*italic text*
+## Big heading
+### Smaller heading
+> This is a quote
+---  (horizontal line)
+[image:filename.jpg]  ← inserted automatically when you upload" required><%= post ? post.content : '' %></textarea>
+
+        <div class="hint-box">
+          💡 Use the toolbar buttons above to format your text. Click <strong>📷 Insert image</strong> to add a photo between paragraphs.
+        </div>
+
+        <!-- Inline image upload -->
+        <div class="inline-upload-area" id="inline-upload-area">
+          <label>Upload a photo to insert at cursor position:</label>
+          <input type="file" id="inline-img-input" accept="image/jpeg,image/png,image/webp" onchange="uploadInlineImage(this)">
+          <p>The image tag will be inserted into your text automatically after upload.</p>
+          <div class="uploaded-inline-imgs" id="uploaded-inline-imgs"></div>
+        </div>
+
+        <!-- Hidden inputs for inline images — added dynamically -->
+        <div id="inline-img-inputs"></div>
+      </div>
+
+      <!-- Featured image -->
+      <div class="form-group">
+        <label>Featured image <span class="form-hint">(shown at top of post — JPG or PNG, max 10MB)</span></label>
+        <% if (post && post.image) { %>
+          <div style="margin-bottom:0.75rem">
+            <img src="<%= post.image %>" style="height:100px;border-radius:8px;object-fit:cover;display:block;margin-bottom:0.4rem">
+            <p style="font-size:0.8rem;color:#9ca3af">Upload a new image to replace this one</p>
+          </div>
+        <% } %>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp">
+      </div>
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a href="/admin" class="btn btn-outline">Cancel</a>
+        <button type="submit" name="action" value="draft" class="btn btn-draft">📝 Save as draft</button>
+        <button type="submit" name="action" value="publish" class="btn btn-accent">🚀 Publish post</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    // ─── Toolbar helpers ───────────────────────────────────────────
+    function getTextarea() { return document.getElementById('content'); }
+
+    function insertTag(before, after) {
+      const ta = getTextarea();
+      const start = ta.selectionStart, end = ta.selectionEnd;
+      const selected = ta.value.substring(start, end) || 'text';
+      const replacement = before + selected + after;
+      ta.value = ta.value.substring(0, start) + replacement + ta.value.substring(end);
+      ta.focus();
+      ta.selectionStart = start + before.length;
+      ta.selectionEnd   = start + before.length + selected.length;
+    }
+
+    function insertLine(prefix) {
+      const ta = getTextarea();
+      const start = ta.selectionStart;
+      // find start of line
+      const before = ta.value.lastIndexOf('\n', start - 1) + 1;
+      ta.value = ta.value.substring(0, before) + '\n' + prefix + ta.value.substring(before);
+      ta.focus();
+      ta.selectionStart = ta.selectionEnd = before + prefix.length + 1;
+    }
+
+    // ─── Inline image upload ───────────────────────────────────────
+    function toggleInlineUpload() {
+      document.getElementById('inline-upload-area').classList.toggle('open');
+    }
+
+    let inlineImgCounter = 0;
+
+    function uploadInlineImage(input) {
+      const file = input.files[0];
+      if (!file) return;
+
+      inlineImgCounter++;
+      const fieldName = 'inline_image_' + inlineImgCounter;
+      const tag = '[image:' + fieldName + ']';
+
+      // Insert tag at cursor in textarea
+      const ta = getTextarea();
+      const pos = ta.selectionStart;
+      ta.value = ta.value.substring(0, pos) + '\n' + tag + '\n' + ta.value.substring(pos);
+      ta.focus();
+
+      // Add hidden file input
+      const hiddenInput = document.createElement('input');
+      hiddenInput.type = 'file';
+      hiddenInput.name = fieldName;
+      hiddenInput.style.display = 'none';
+      // Transfer the file using DataTransfer
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      hiddenInput.files = dt.files;
+      document.getElementById('inline-img-inputs').appendChild(hiddenInput);
+
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = e => {
+        const preview = document.createElement('div');
+        preview.className = 'uploaded-inline-img';
+        preview.id = 'preview-' + inlineImgCounter;
+        preview.innerHTML = `
+          <img src="${e.target.result}" alt="">
+          <span>${file.name}</span>
+          <span style="color:#6b7280;font-size:11px">→ ${tag}</span>
+        `;
+        document.getElementById('uploaded-inline-imgs').appendChild(preview);
+      };
+      reader.readAsDataURL(file);
+
+      // Reset file input so same file can be re-selected
+      input.value = '';
+    }
+  </script>
+
+</body>
+</html>

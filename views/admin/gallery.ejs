@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gallery — Snap & Snack Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
+        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-main">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.25rem">Photo Gallery</h1>
+        <p style="color:#6b7280;font-size:0.9rem"><%= photos.length %> photo<%= photos.length !== 1 ? 's' : '' %> uploaded</p>
+      </div>
+      <a href="/gallery" target="_blank" class="btn btn-outline btn-sm">View public gallery ↗</a>
+    </div>
+
+    <!-- Upload form -->
+    <div class="form-card" style="margin-bottom:2rem">
+      <div class="section-heading">Upload new photos</div>
+      <form method="POST" action="/admin/gallery/upload" enctype="multipart/form-data">
+        <div class="form-group">
+          <label>Select photos <span class="form-hint">(you can select multiple at once)</span></label>
+          <div class="upload-area" onclick="document.getElementById('photo-input').click()">
+            <p style="font-size:1.5rem;margin-bottom:0.5rem">📷</p>
+            <p>Click to select photos</p>
+            <p style="font-size:0.8rem;margin-top:0.25rem">JPG, PNG · Max 10MB each · Up to 20 at once</p>
+          </div>
+          <input type="file" id="photo-input" name="photos" accept="image/jpeg,image/png,image/webp" multiple onchange="showFileNames(this)">
+          <p id="file-names" style="font-size:0.85rem;color:#6b7280;margin-top:0.5rem"></p>
+        </div>
+        <div class="form-group">
+          <label>Caption <span class="form-hint">(optional — same caption for all uploaded photos)</span></label>
+          <input type="text" name="captions" placeholder="e.g. Sunset in Santorini, Greece">
+        </div>
+        <button type="submit" class="btn btn-accent">Upload photos</button>
+      </form>
+    </div>
+
+    <!-- Photo grid -->
+    <% if (photos.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📷</div>
+        <p>No photos yet. Upload your first ones above!</p>
+      </div>
+    <% } else { %>
+      <div class="section-heading">Your photos</div>
+      <div class="photo-admin-grid">
+        <% photos.forEach(photo => { %>
+          <div class="photo-admin-card">
+            <img src="<%= photo.src %>" alt="<%= photo.caption || 'Photo' %>">
+            <div class="photo-admin-footer">
+  <form method="POST" action="/admin/gallery/edit/<%= photo.id %>" style="display:flex;gap:6px;align-items:center;flex:1">
+    <input type="text" name="caption" value="<%= photo.caption || '' %>" placeholder="Add caption..." style="font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;width:100%;font-family:inherit">
+    <button type="submit" class="btn btn-sm btn-outline">Save</button>
+  </form>
+  <form method="POST" action="/admin/gallery/delete/<%= photo.id %>" onsubmit="return confirm('Delete this photo?')">
+    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+  </form>
+</div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <script>
+    function showFileNames(input) {
+      const names = Array.from(input.files).map(f => f.name).join(', ');
+      document.getElementById('file-names').textContent = input.files.length + ' file(s) selected: ' + names;
+    }
+  </script>
+
+</body>
+</html>

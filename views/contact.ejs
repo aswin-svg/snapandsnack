@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact — Snap & Snack</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snack</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact" class="active">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+      <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+</div>
+</div>
+    </div>
+  </nav>
+
+  <div class="container-sm">
+    <div class="contact-header">
+      <h1>Get in touch</h1>
+      <p>Have a question, a recommendation, or just want to say hi? I'd love to hear from you!</p>
+    </div>
+
+    <% if (success) { %>
+      <div class="contact-card" style="text-align:center;padding:3rem">
+        <div style="font-size:3rem;margin-bottom:1rem">✅</div>
+        <h2 style="font-family:var(--serif);margin-bottom:0.5rem">Message sent!</h2>
+        <p style="color:var(--muted)">Thanks for reaching out. I'll get back to you soon!</p>
+        <a href="/" class="btn btn-accent" style="margin-top:1.5rem">Back to home</a>
+      </div>
+    <% } else { %>
+      <div class="contact-card">
+        <form method="POST" action="/contact">
+          <div class="form-group">
+            <label>Your name *</label>
+            <input type="text" name="name" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label>Email address *</label>
+            <input type="email" name="email" placeholder="you@email.com" required>
+          </div>
+          <div class="form-group">
+            <label>Message *</label>
+            <textarea name="message" rows="6" placeholder="Write your message here..." required></textarea>
+          </div>
+          <button type="submit" class="btn btn-accent" style="width:100%;padding:0.85rem">Send message →</button>
+        </form>
+      </div>
+    <% } %>
+  </div>
+
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('darkMode', isDark);
+  document.getElementById('dark-toggle').classList.toggle('on', isDark);
+  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+}
+if (localStorage.getItem('darkMode') === 'true') {
+  document.documentElement.classList.add('dark');
+  document.getElementById('dark-toggle').classList.add('on');
+  document.getElementById('toggle-thumb').textContent = '🌙';
+}
+  </script>
+
+</body>
+</html>
