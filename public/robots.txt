@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 Disallow: /admin
-Sitemap: https://snapandsnack.up.railway.app/sitemap.xml
+Sitemap: https:// snapandsnack-production.up.railway.app/sitemap.xml
