@@ -305,6 +305,12 @@ img { display: block; max-width: 100%; }
   font-size: 1.05rem; line-height: 1.9; color: #2c2820;
   white-space: pre-wrap; font-weight: 300;
 }
+.post-body br + br {
+  display: block;
+  margin-top: 1rem;
+  content: '';
+}
+html.dark .post-body { color: #d4c9bc; }
 html.dark .post-body { color: #d4c9bc; }
 .post-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 2rem 0; }
 .tag {
