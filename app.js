@@ -422,6 +422,24 @@ app.post('/admin/password', requireLogin, (req, res) => {
 });
 
 // ─── Start ────────────────────────────────────────────────────────
+// ─── Sitemap & Robots ─────────────────────────────────────────────
+app.get('/sitemap.xml', (req, res) => {
+  const db = readDB();
+  const base = 'https://snapandsnack-production.up.railway.app';
+  const posts = db.posts.filter(p => p.status !== 'draft');
+  let xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/9/sitemap.xsd">
+  <url><loc>${base}/</loc><priority>1.0</priority></url>
+  <url><loc>${base}/blog</loc><priority>0.9</priority></url>
+  <url><loc>${base}/gallery</loc><priority>0.8</priority></url>
+  <url><loc>${base}/about</loc><priority>0.7</priority></url>
+  <url><loc>${base}/contact</loc><priority>0.6</priority></url>`;
+  posts.forEach(p => {
+    xml += `<url><loc>${base}/post/${p.slug}</loc><priority>0.8</priority></url>`;
+  });
+  xml += `</urlset>`;
+  res.header('Content-Type', 'application/xml');
+  res.send(xml);
+});
 app.listen(3000, () => {
   console.log('');
   console.log('  ✅  Snap & Snack is live!');
