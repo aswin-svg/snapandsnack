@@ -8,7 +8,7 @@ let sharp;
 try { sharp = require('sharp'); } catch (e) { sharp = null; }
 
 // ─── Detect environment ───────────────────────────────────────────
-const USE_MONGO = !!process.env.MONGODB_URI;
+const USE_MONGO = false;
 let Post, Gallery, Message, Admin, mongoose;
 
 if (USE_MONGO) {
