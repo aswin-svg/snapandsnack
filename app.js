@@ -4,7 +4,8 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const sharp = require('sharp');
+let sharp;
+try { sharp = require('sharp'); } catch (e) { sharp = null; }
 
 // ─── Detect environment ───────────────────────────────────────────
 const USE_MONGO = !!process.env.MONGODB_URI;
@@ -63,6 +64,7 @@ function writeDB(data) {
 
 // ─── Image conversion ─────────────────────────────────────────────
 async function convertToJpg(filePath) {
+  if (!sharp) return; // skip if sharp not available
   try {
     const tmpPath = filePath + '_tmp.jpg';
     await sharp(filePath).rotate().jpeg({ quality: 88 }).toFile(tmpPath);
