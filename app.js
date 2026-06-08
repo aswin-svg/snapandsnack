@@ -570,7 +570,7 @@ app.post('/admin/password', requireLogin, async (req, res) => {
 
 // ─── Sitemap & Robots ─────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
-  const base = 'https://snapandsnack-production.up.railway.app';
+  const base = 'https://snapandsnacks.com';
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } })
     : readDB().posts.filter(p => p.status !== 'draft');
@@ -590,7 +590,7 @@ app.get('/sitemap.xml', async (req, res) => {
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://snapandsnack-production.up.railway.app/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://snapandsnacks.com/sitemap.xml');
 });
 
 // ─── Start ────────────────────────────────────────────────────────
