@@ -1329,3 +1329,85 @@ html.dark .most-viewed-info h3 { color: #e8e0d8; }
   color: var(--muted);
 }
 html.dark .tag-card { background: #1a1814; border-color: #2c2820; }
+
+/* ─── Archive page ───────────────────────────────────────────────── */
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-bottom: 4rem;
+}
+.archive-month {
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.archive-month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: var(--cream);
+  border-bottom: 1px solid var(--border);
+}
+.archive-month-header h2 {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.archive-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+  background: var(--border);
+  padding: 0.2rem 0.65rem;
+  border-radius: 20px;
+}
+.archive-posts {
+  display: flex;
+  flex-direction: column;
+}
+.archive-post-item {
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.archive-post-item:last-child { border-bottom: none; }
+.archive-post-item:hover { background: var(--cream); }
+.archive-post-item img {
+  width: 64px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.archive-post-placeholder {
+  width: 64px;
+  height: 48px;
+  background: var(--border);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.archive-post-info h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0.25rem 0;
+  line-height: 1.4;
+}
+.archive-arrow {
+  font-size: 1rem;
+  color: var(--muted);
+}
+html.dark .archive-month { background: #1a1814; border-color: #2c2820; }
+html.dark .archive-month-header { background: #141210; border-color: #2c2820; }
+html.dark .archive-post-info h3 { color: #e8e0d8; }
+html.dark .archive-post-item:hover { background: #141210; }

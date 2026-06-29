@@ -266,6 +266,21 @@ app.get('/tags/:tag', async (req, res) => {
   res.render('tag-posts', { tag, posts });
 });
 
+app.get('/archive', async (req, res) => {
+  const db = readDB();
+  const posts = USE_MONGO
+    ? await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 })
+    : db.posts.filter(p => p.status !== 'draft').reverse();
+  const archive = {};
+  posts.forEach(post => {
+    const date = new Date(post.id);
+    const key = date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
+    if (!archive[key]) archive[key] = [];
+    archive[key].push(post);
+  });
+  res.render('archive', { archive });
+});
+
 app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 
