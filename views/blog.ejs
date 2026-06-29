@@ -84,6 +84,7 @@
               <% } %>
               <div class="post-card-footer">
                 <span class="post-date"><%= post.date %></span>
+                <span class="post-read-time">⏱️ <%= Math.max(1, Math.round(post.content.split(/\s+/).length / 200)) %> min read</span>
                 <a href="/post/<%= post.slug %>" class="post-link">Read →</a>
               </div>
             </div>

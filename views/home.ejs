@@ -169,9 +169,9 @@
                 <p class="post-card-excerpt"><%= post.content.substring(0, 110) %>...</p>
                 <div class="post-card-footer">
                   <span class="post-date"><%= post.date %></span>
-                  <% if (post.views) { %><span class="post-card-views">👁️ <%= post.views %></span><% } %>
+                  <span class="post-read-time">⏱️ <%= Math.max(1, Math.round(post.content.split(/\s+/).length / 200)) %> min read</span>
                   <a href="/post/<%= post.slug %>" class="post-link">Read →</a>
-                </div>
+                </div>  
               </div>
             </article>
           <% }) %>
