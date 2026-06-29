@@ -1269,7 +1269,7 @@ html.dark .most-viewed-info h3 { color: #e8e0d8; }
 
 /* ─── Quote of the day ───────────────────────────────────────────── */
 .quote-section {
-  padding: 3rem 0;
+  padding: 0.5rem 0;
   background: var(--accent);
 }
 .quote-box {
@@ -1283,15 +1283,15 @@ html.dark .most-viewed-info h3 { color: #e8e0d8; }
   font-size: 5rem;
   color: rgba(255,255,255,0.3);
   line-height: 0.5;
-  margin-bottom: 1rem;
+  margin-bottom: 0.3rem;
 }
 .quote-text {
   font-family: var(--serif);
-  font-size: 1.3rem;
+  font-size: 1rem;
   color: #fff;
   line-height: 1.7;
   font-style: italic;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
 }
 .quote-author {
   font-size: 0.9rem;
