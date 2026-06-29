@@ -16,6 +16,27 @@
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9JTYL4795"></script>
   <script>
+
+    // Quote of the day
+const quotes = [
+  { text: "Travel is the only thing you buy that makes you richer.", author: "Anonymous" },
+  { text: "The world is a book, and those who do not travel read only one page.", author: "Saint Augustine" },
+  { text: "Life is short and the world is wide.", author: "Simon Raven" },
+  { text: "Adventure is worthwhile in itself.", author: "Amelia Earhart" },
+  { text: "Travel far enough, you meet yourself.", author: "David Mitchell" },
+  { text: "Food is our common ground, a universal experience.", author: "James Beard" },
+  { text: "To travel is to live.", author: "Hans Christian Andersen" },
+  { text: "One's destination is never a place, but a new way of seeing things.", author: "Henry Miller" },
+  { text: "Eat, drink and be merry, for tomorrow we travel.", author: "Anonymous" },
+  { text: "Travel makes one modest. You see what a tiny place you occupy in the world.", author: "Gustave Flaubert" },
+  { text: "A good traveler has no fixed plans and is not intent on arriving.", author: "Lao Tzu" },
+  { text: "The journey not the arrival matters.", author: "T.S. Eliot" },
+];
+const today = new Date().getDate();
+const quote = quotes[today % quotes.length];
+document.getElementById('daily-quote').textContent = quote.text;
+document.getElementById('daily-author').textContent = '— ' + quote.author;
+
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
@@ -70,6 +91,18 @@
 
 
   <!-- ░░ STATS STRIP ░░ -->
+
+  <!-- ░░ QUOTE OF THE DAY ░░ -->
+<section class="quote-section">
+  <div class="container">
+    <div class="quote-box">
+      <div class="quote-mark">"</div>
+      <p class="quote-text" id="daily-quote"></p>
+      <p class="quote-author" id="daily-author"></p>
+    </div>
+  </div>
+</section>
+
   <section class="stats-strip">
     <div class="container stats-strip-inner">
       <div class="stat-item">
