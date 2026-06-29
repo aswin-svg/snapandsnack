@@ -1100,12 +1100,14 @@ html.dark .pinned-badge { background: #2d2510; border-color: #854d0e; color: #fd
 /* ─── Inline post content styling ───────────────────────────────── */
 .inline-post-img {
   width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 10px;
-  margin: 1.5rem 0;
+  max-width: 700px;
+  max-height: 450px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin: 2rem auto;
   display: block;
   border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
 .post-h2 {
   font-family: var(--serif);
