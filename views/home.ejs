@@ -202,6 +202,38 @@
   <% } %>
 
   <!-- ░░ WHAT YOU'LL FIND ░░ -->
+<% const topPosts = [...posts].sort((a,b) => (b.views||0) - (a.views||0)).slice(0,3); %>
+<% if (topPosts.length > 0) { %>
+<section class="most-viewed-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">🔥 Most Popular</h2>
+      <a href="/blog">View all →</a>
+    </div>
+    <div class="most-viewed-list">
+      <% topPosts.forEach((post, i) => { %>
+        <a href="/post/<%= post.slug %>" class="most-viewed-item">
+          <span class="most-viewed-rank">#<%= i+1 %></span>
+          <% if (post.image) { %>
+            <img src="<%= post.image %>" alt="<%= post.title %>">
+          <% } else { %>
+            <div class="most-viewed-placeholder">📷</div>
+          <% } %>
+          <div class="most-viewed-info">
+            <span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span>
+            <h3><%= post.title %></h3>
+            <div class="most-viewed-meta">
+              <span>👁️ <%= post.views || 0 %> views</span>
+              <span>⏱️ <%= Math.max(1, Math.round(post.content.split(/\s+/).length / 200)) %> min read</span>
+            </div>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
   <section class="what-section">
     <div class="container">
       <h2 class="section-title" style="text-align:center;margin-bottom:2rem">What you'll find here</h2>
