@@ -241,6 +241,31 @@ app.get('/gallery', async (req, res) => {
   } catch (err) { res.status(500).send('Error: ' + err.message); }
 });
 
+app.get('/tags', async (req, res) => {
+  const db = readDB();
+  const posts = USE_MONGO
+    ? await Post.find({ status: { $ne: 'draft' } })
+    : db.posts.filter(p => p.status !== 'draft');
+  const tagMap = {};
+  posts.forEach(post => {
+    (post.tags || []).forEach(tag => {
+      if (!tagMap[tag]) tagMap[tag] = [];
+      tagMap[tag].push(post);
+    });
+  });
+  res.render('tags', { tagMap });
+});
+
+app.get('/tags/:tag', async (req, res) => {
+  const db = readDB();
+  const allPosts = USE_MONGO
+    ? await Post.find({ status: { $ne: 'draft' } })
+    : db.posts.filter(p => p.status !== 'draft');
+  const tag = req.params.tag;
+  const posts = allPosts.filter(p => (p.tags || []).includes(tag));
+  res.render('tag-posts', { tag, posts });
+});
+
 app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 

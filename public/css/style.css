@@ -1292,3 +1292,40 @@ html.dark .most-viewed-info h3 { color: #e8e0d8; }
   font-weight: 500;
   letter-spacing: 0.05em;
 }
+
+/* ─── Tags page ──────────────────────────────────────────────────── */
+.tags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1rem;
+  padding-bottom: 4rem;
+}
+.tag-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 1rem;
+  background: var(--warm-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.2s;
+  text-align: center;
+  gap: 0.5rem;
+}
+.tag-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+.tag-card-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+.tag-card-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+html.dark .tag-card { background: #1a1814; border-color: #2c2820; }

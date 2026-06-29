@@ -77,8 +77,10 @@
       <h1><%= post.title %></h1>
       <% if (post.tags.length > 0) { %>
         <div class="post-tags" style="justify-content:center">
-          <% post.tags.forEach(t => { %><span class="tag">#<%= t %></span><% }) %>
-        </div>
+  <% post.tags.forEach(t => { %>
+    <a href="/tags/<%= encodeURIComponent(t) %>" class="tag">#<%= t %></a>
+  <% }) %>
+</div>
       <% } %>
     </div>
 

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tags — Snap & Snacks</title>
+  <meta name="description" content="Browse all tags on Snap & Snacks blog.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+          <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+        </div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="blog-header">
+      <h1>🏷️ All Tags</h1>
+      <p style="color:var(--muted);font-weight:300">Browse posts by topic</p>
+    </div>
+
+    <% if (Object.keys(tagMap).length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">🏷️</div>
+        <p>No tags yet.</p>
+      </div>
+    <% } else { %>
+      <div class="tags-grid">
+        <% Object.entries(tagMap).sort((a,b) => b[1].length - a[1].length).forEach(([tag, posts]) => { %>
+          <a href="/tags/<%= encodeURIComponent(tag) %>" class="tag-card">
+            <span class="tag-card-name">#<%= tag %></span>
+            <span class="tag-card-count"><%= posts.length %> post<%= posts.length !== 1 ? 's' : '' %></span>
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+  <button class="dark-mode-toggle" id="dark-toggle-float" onclick="toggleDark()" title="Toggle dark mode" style="display:none">🌙</button>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks</div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+      document.documentElement.classList.toggle('dark');
+      const isDark = document.documentElement.classList.contains('dark');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('dark-toggle').classList.toggle('on', isDark);
+      document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('dark-toggle').classList.add('on');
+      document.getElementById('toggle-thumb').textContent = '🌙';
+    }
+  </script>
+
+</body>
+</html>
