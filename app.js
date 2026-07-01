@@ -474,6 +474,28 @@ app.post('/admin/delete/:id', requireLogin, async (req, res) => {
   res.redirect('/admin');
 });
 
+app.post('/admin/comment/reply/:postId/:commentId', requireLogin, async (req, res) => {
+  const { reply } = req.body;
+  if (!reply) return res.redirect('back');
+  if (USE_MONGO) {
+    const post = await Post.findOne({ id: Number(req.params.postId) });
+    if (post) {
+      const comment = post.comments.find(c => c.id === Number(req.params.commentId));
+      if (comment) comment.reply = reply.trim();
+      await post.save();
+    }
+  } else {
+    const db = readDB();
+    const post = db.posts.find(p => p.id === Number(req.params.postId));
+    if (post) {
+      const comment = post.comments.find(c => c.id === Number(req.params.commentId));
+      if (comment) comment.reply = reply.trim();
+      writeDB(db);
+    }
+  }
+  res.redirect('back');
+});
+
 app.post('/admin/comment/delete/:postId/:commentId', requireLogin, async (req, res) => {
   if (USE_MONGO) {
     const post = await Post.findOne({ id: Number(req.params.postId) });

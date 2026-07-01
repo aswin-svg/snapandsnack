@@ -1411,3 +1411,42 @@ html.dark .archive-month { background: #1a1814; border-color: #2c2820; }
 html.dark .archive-month-header { background: #141210; border-color: #2c2820; }
 html.dark .archive-post-info h3 { color: #e8e0d8; }
 html.dark .archive-post-item:hover { background: #141210; }
+
+/* ─── Comment reply ──────────────────────────────────────────────── */
+.comment-reply {
+  margin-top: 1rem;
+  margin-left: 2rem;
+  padding: 1rem 1.25rem;
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+}
+.comment-reply-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+.comment-reply-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.author-badge {
+  font-size: 0.7rem;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 20px;
+  margin-left: 0.4rem;
+  font-weight: 500;
+}
+html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }

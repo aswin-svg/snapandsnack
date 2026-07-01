@@ -135,15 +135,26 @@
         <div class="comments-list">
           <% post.comments.slice().reverse().forEach(c => { %>
             <div class="comment-card">
-              <div class="comment-header">
-                <div class="comment-avatar"><%= c.name.charAt(0).toUpperCase() %></div>
-                <div>
-                  <div class="comment-name"><%= c.name %></div>
-                  <div class="comment-date"><%= c.date %></div>
-                </div>
+            <div class="comment-header">
+              <div class="comment-avatar"><%= c.name.charAt(0).toUpperCase() %></div>
+              <div>
+                <div class="comment-name"><%= c.name %></div>
+                <div class="comment-date"><%= c.date %></div>
               </div>
-              <p class="comment-body"><%= c.comment %></p>
             </div>
+            <p class="comment-body"><%= c.comment %></p>
+            <% if (c.reply) { %>
+              <div class="comment-reply">
+                <div class="comment-reply-header">
+                  <div class="comment-reply-avatar">S</div>
+                  <div>
+                    <div class="comment-name">Snap & Snacks <span class="author-badge">Author</span></div>
+                  </div>
+                </div>
+                <p class="comment-body"><%= c.reply %></p>
+              </div>
+            <% } %>
+          </div>
           <% }) %>
         </div>
       <% } else { %>
