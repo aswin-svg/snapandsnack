@@ -312,13 +312,23 @@ document.addEventListener('DOMContentLoaded', function() {
         <h2>📬 Stay in the loop</h2>
         <p>Get new travel stories and food adventures delivered to your inbox. No spam, ever!</p>
       </div>
-      <form class="newsletter-form" method="POST" action="/newsletter">
-        <input type="email" name="email" placeholder="your@email.com" required>
+      <form class="newsletter-form" id="newsletter-form" onsubmit="handleNewsletter(event)">
+        <input type="email" name="email" id="newsletter-email" placeholder="your@email.com" required>
         <button type="submit" class="btn btn-accent">Subscribe →</button>
       </form>
     </div>
   </div>
 </section>
+
+<!-- Newsletter popup -->
+<div class="newsletter-popup" id="newsletter-popup">
+  <div class="newsletter-popup-box">
+    <div class="newsletter-popup-icon">🎉</div>
+    <h3>You're subscribed!</h3>
+    <p>Thanks for joining! You'll get the latest travel stories and food adventures from Snap & Snacks.</p>
+    <button class="btn btn-accent" onclick="closeNewsletterPopup()">Awesome! →</button>
+  </div>
+</div>
 
   <footer class="footer">
     <div class="container">
@@ -364,6 +374,28 @@ if (localStorage.getItem('darkMode') === 'true') {
   document.documentElement.classList.add('dark');
   document.getElementById('dark-toggle').classList.add('on');
   document.getElementById('toggle-thumb').textContent = '🌙';
+}
+
+// Newsletter popup
+async function handleNewsletter(e) {
+  e.preventDefault();
+  const email = document.getElementById('newsletter-email').value;
+  try {
+    await fetch('/newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'email=' + encodeURIComponent(email)
+    });
+    document.getElementById('newsletter-popup').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    document.getElementById('newsletter-email').value = '';
+  } catch(err) {
+    alert('Something went wrong. Please try again!');
+  }
+}
+function closeNewsletterPopup() {
+  document.getElementById('newsletter-popup').classList.remove('open');
+  document.body.style.overflow = '';
 }
   </script>
 
