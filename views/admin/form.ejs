@@ -120,17 +120,25 @@
 
         <!-- Toolbar -->
         <div class="editor-toolbar">
-          <button type="button" onclick="insertTag('**','**')" title="Bold"><b>B</b></button>
-          <button type="button" onclick="insertTag('*','*')" title="Italic"><i>I</i></button>
-          <div class="sep"></div>
-          <button type="button" onclick="insertLine('## ')" title="Heading">H2</button>
-          <button type="button" onclick="insertLine('### ')" title="Subheading">H3</button>
-          <div class="sep"></div>
-          <button type="button" onclick="insertLine('> ')" title="Quote">❝ Quote</button>
-          <button type="button" onclick="insertLine('---')" title="Divider">— Line</button>
-          <div class="sep"></div>
-          <button type="button" class="insert-img-btn" onclick="toggleInlineUpload()">📷 Insert image</button>
-        </div>
+  <button type="button" onclick="insertTag('**','**')" title="Bold"><b>B</b></button>
+  <button type="button" onclick="insertTag('*','*')" title="Italic"><i>I</i></button>
+  <button type="button" onclick="insertTag('~~','~~')" title="Strikethrough"><s>S</s></button>
+  <div class="sep"></div>
+  <button type="button" onclick="insertLine('## ')" title="Heading 2">H2</button>
+  <button type="button" onclick="insertLine('### ')" title="Heading 3">H3</button>
+  <button type="button" onclick="insertLine('#### ')" title="Heading 4">H4</button>
+  <div class="sep"></div>
+  <button type="button" onclick="insertLine('> ')" title="Quote">❝ Quote</button>
+  <button type="button" onclick="insertLine('---')" title="Divider">— Line</button>
+  <div class="sep"></div>
+  <button type="button" onclick="insertLine('• ')" title="Bullet list">• List</button>
+  <button type="button" onclick="insertLine('1. ')" title="Numbered list">1. List</button>
+  <div class="sep"></div>
+  <button type="button" onclick="insertLink()" title="Insert link">🔗 Link</button>
+  <button type="button" onclick="insertEmoji()" title="Insert emoji">😊 Emoji</button>
+  <div class="sep"></div>
+  <button type="button" class="insert-img-btn" onclick="toggleInlineUpload()">📷 Image</button>
+</div>
 
         <textarea id="content" name="content" rows="16" placeholder="Write your story here...
 
@@ -256,6 +264,28 @@ Tips:
       // Reset file input so same file can be re-selected
       input.value = '';
     }
+//better text edior
+     function insertLink() {
+  const url = prompt('Enter URL:');
+  if (!url) return;
+  const text = prompt('Enter link text:') || url;
+  const ta = getTextarea();
+  const pos = ta.selectionStart;
+  const link = '[' + text + '](' + url + ')';
+  ta.value = ta.value.substring(0, pos) + link + ta.value.substring(pos);
+  ta.focus();
+}
+
+function insertEmoji() {
+  const emojis = ['😊','🌍','✈️','🍜','📷','🏔️','🌿','❤️','🔥','⭐','🎉','👋','🌸','🍕','🏖️','🎒','🗺️','☕','🌅','🙏'];
+  const emoji = prompt('Pick an emoji:\n' + emojis.join(' '));
+  if (!emoji) return;
+  const ta = getTextarea();
+  const pos = ta.selectionStart;
+  ta.value = ta.value.substring(0, pos) + emoji + ta.value.substring(pos);
+  ta.focus();
+}
+
   </script>
 
 </body>

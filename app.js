@@ -122,16 +122,22 @@ function renderContent(text) {
   if (!text) return '';
   return text
     .replace(/\[image:([^\]]+)\]/g, '</p><img src="$1" alt="Post image" class="inline-post-img"><p>')
+    .replace(/^#### (.+)$/gm, '<h4 class="post-h4">$1</h4>')
     .replace(/^### (.+)$/gm, '<h3 class="post-h3">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="post-h2">$1</h2>')
     .replace(/^---$/gm, '<hr class="post-hr">')
     .replace(/^> (.+)$/gm, '<blockquote class="post-quote">$1</blockquote>')
+    .replace(/^• (.+)$/gm, '<li class="post-li">$1</li>')
+    .replace(/^[0-9]+\. (.+)$/gm, '<li class="post-li post-li-num">$1</li>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/~~(.+?)~~/g, '<del>$1</del>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="post-link-inline">$1</a>')
     .replace(/\n/g, '<br>')
     .replace(/<br>\[image:/g, '[image:')
     .replace(/\[image:[^\]]+\]<br>/g, '');
-}
+}lace(/\[image:[^\]]+\]<br>/g, '');
+
 
 // ═══════════════════════════════════════════════════════════════════
 // PUBLIC ROUTES
