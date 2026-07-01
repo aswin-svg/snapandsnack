@@ -304,6 +304,21 @@ document.addEventListener('DOMContentLoaded', function() {
   <!-- Back to top & dark mode -->
   <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
   
+<!-- ░░ NEWSLETTER ░░ -->
+<section class="newsletter-section">
+  <div class="container">
+    <div class="newsletter-box">
+      <div class="newsletter-text">
+        <h2>📬 Stay in the loop</h2>
+        <p>Get new travel stories and food adventures delivered to your inbox. No spam, ever!</p>
+      </div>
+      <form class="newsletter-form" method="POST" action="/newsletter">
+        <input type="email" name="email" placeholder="your@email.com" required>
+        <button type="submit" class="btn btn-accent">Subscribe →</button>
+      </form>
+    </div>
+  </div>
+</section>
 
   <footer class="footer">
     <div class="container">

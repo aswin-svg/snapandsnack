@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Newsletter — Snap & Snacks Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="admin-body">
+
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="/" class="admin-logo">Snap &amp; <span>Snacks</span></a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="admin-nav-links">
+        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
+        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-main">
+    <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:1.5rem">📧 Newsletter Subscribers</h1>
+
+    <div class="dashboard-stats" style="grid-template-columns:repeat(1,1fr);max-width:300px">
+      <div class="stat-card">
+        <div class="stat-num"><%= subscribers.length %></div>
+        <div class="stat-label">Total subscribers</div>
+      </div>
+    </div>
+
+    <% if (subscribers.length === 0) { %>
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>No subscribers yet.</p>
+      </div>
+    <% } else { %>
+      <div class="admin-table" style="margin-top:1.5rem">
+        <div class="table-head" style="grid-template-columns:1fr auto">
+          <span>Email</span>
+          <span>Status</span>
+        </div>
+        <% subscribers.forEach((email, i) => { %>
+          <div class="table-row" style="grid-template-columns:1fr auto">
+            <span style="font-size:0.95rem;color:var(--ink)">📧 <%= email %></span>
+            <span style="font-size:0.8rem;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px">Active</span>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+  </div>
+
+</body>
+</html>

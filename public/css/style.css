@@ -1450,3 +1450,53 @@ html.dark .archive-post-item:hover { background: #141210; }
   font-weight: 500;
 }
 html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }
+
+/* ─── Newsletter ─────────────────────────────────────────────────── */
+.newsletter-section {
+  padding: 4rem 0;
+  background: var(--ink);
+}
+.newsletter-box {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+.newsletter-text h2 {
+  font-family: var(--serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.75rem;
+}
+.newsletter-text p {
+  color: #a09890;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  font-weight: 300;
+}
+.newsletter-form {
+  display: flex;
+  gap: 0.75rem;
+}
+.newsletter-form input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1px solid #2c2820;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: var(--sans);
+  background: #1a1814;
+  color: #e8e0d8;
+  transition: border-color 0.15s;
+}
+.newsletter-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.newsletter-form input::placeholder { color: #6b6560; }
+
+@media (max-width: 640px) {
+  .newsletter-box { grid-template-columns: 1fr; gap: 1.5rem; }
+  .newsletter-form { flex-direction: column; }
+}

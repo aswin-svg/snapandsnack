@@ -281,6 +281,42 @@ app.get('/archive', async (req, res) => {
   res.render('archive', { archive });
 });
 
+app.post('/newsletter', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.redirect('back');
+  if (USE_MONGO) {
+    // check if already subscribed
+    const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
+    if (!exists) {
+      await Message.create({
+        id: Date.now(), name: 'newsletter',
+        email: email.trim(), message: 'Newsletter subscriber',
+        date: formatDate(new Date()), read: false
+      });
+    }
+  } else {
+    const db = readDB();
+    if (!db.newsletter) db.newsletter = [];
+    if (!db.newsletter.includes(email.trim())) {
+      db.newsletter.push(email.trim());
+      writeDB(db);
+    }
+  }
+  res.redirect('back');
+});
+
+app.get('/admin/newsletter', requireLogin, async (req, res) => {
+  let subscribers;
+  if (USE_MONGO) {
+    const msgs = await Message.find({ name: 'newsletter' });
+    subscribers = msgs.map(m => m.email);
+  } else {
+    const db = readDB();
+    subscribers = db.newsletter || [];
+  }
+  res.render('admin/newsletter', { subscribers });
+});
+
 app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 
