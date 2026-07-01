@@ -31,23 +31,48 @@
 
     <!-- Stats -->
     <div class="dashboard-stats">
-      <div class="stat-card">
-        <div class="stat-num"><%= posts.length %></div>
-        <div class="stat-label">Published posts</div>
+  <div class="stat-card">
+    <div class="stat-num"><%= posts.length %></div>
+    <div class="stat-label">Published posts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num"><%= drafts.length %></div>
+    <div class="stat-label">Drafts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num"><%= photoCount %></div>
+    <div class="stat-label">Gallery photos</div>
+  </div>
+  <div class="stat-card" style="cursor:pointer" onclick="window.location='/admin/messages'">
+    <div class="stat-num"><%= unreadMessages %></div>
+    <div class="stat-label">Unread messages</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num"><%= posts.reduce((a,b) => a + (b.views||0), 0) %></div>
+    <div class="stat-label">Total views</div>
+  </div>
+</div>
+
+<!-- Views per post chart -->
+<div class="analytics-section">
+  <div class="section-heading" style="margin-bottom:1rem">📊 Views per post</div>
+  <div class="analytics-bars">
+    <% const maxViews = Math.max(...posts.map(p => p.views||0), 1); %>
+    <% posts.slice(0,8).forEach(post => { %>
+      <div class="analytics-bar-item">
+        <div class="analytics-bar-label">
+          <a href="/post/<%= post.slug %>" target="_blank"><%= post.title.substring(0,30) %><%= post.title.length > 30 ? '...' : '' %></a>
+        </div>
+        <div class="analytics-bar-wrap">
+          <% const barWidth = Math.round(((post.views||0)/maxViews)*100); %>
+            <div class="analytics-bar-fill" data-width="<%= barWidth %>">
+            <span class="analytics-bar-val"><%= post.views||0 %></span>
+          </div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-num"><%= drafts.length %></div>
-        <div class="stat-label">Drafts</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num"><%= photoCount %></div>
-        <div class="stat-label">Gallery photos</div>
-      </div>
-      <div class="stat-card" style="cursor:pointer" onclick="window.location='/admin/messages'">
-        <div class="stat-num"><%= unreadMessages %></div>
-        <div class="stat-label">Unread messages</div>
-      </div>
-    </div>
+    <% }) %>
+  </div>
+</div>
 
     <!-- Actions -->
     <div class="dashboard-actions">
@@ -168,5 +193,11 @@
     <% } %>
 
   </div>
+  <script>
+    // Animate analytics bars
+document.querySelectorAll('.analytics-bar-fill').forEach(bar => {
+  bar.style.width = bar.dataset.width + '%';
+});
+  </script>
 </body>
 </html>

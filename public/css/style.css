@@ -1536,7 +1536,7 @@ html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }
   margin-bottom: 1.5rem;
 }
 html.dark .newsletter-popup-box { background: #1a1814; }
-html.dark .newsletter-popup-box h3 { color: #e8e0d8; }
+html.dark .newsletter-popup-box h3 { color: #0c0c0c; }
 
 @media (max-width: 640px) {
   .newsletter-box { grid-template-columns: 1fr; gap: 1.5rem; }
