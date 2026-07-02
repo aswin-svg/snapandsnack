@@ -81,7 +81,7 @@ app.set('view engine', 'ejs');
 app.set('views', './views');
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
-app.use(session({ secret: 'snapsnack-secret-key', resave: false, saveUninitialized: false }));
+app.use(session({ secret: process.env.SESSION_SECRET || 'snapsnack-secret-key', resave: false, saveUninitialized: false }));
 
 // ─── Uploads ──────────────────────────────────────────────────────
 const postStorage = multer.diskStorage({
