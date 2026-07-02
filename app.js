@@ -136,7 +136,7 @@ function renderContent(text) {
     .replace(/\n/g, '<br>')
     .replace(/<br>\[image:/g, '[image:')
     .replace(/\[image:[^\]]+\]<br>/g, '');
-}lace(/\[image:[^\]]+\]<br>/g, '');
+}
 
 
 // ═══════════════════════════════════════════════════════════════════
