@@ -6,7 +6,10 @@ const path = require('path');
 const db = JSON.parse(fs.readFileSync(path.join(__dirname, 'blog.json'), 'utf-8'));
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://aswin:Aswin2024@snapandsnack.u6op5mg.mongodb.net/?retryWrites=true&w=majority&appName=snapandsnack')
+mongoose.connect('mongodb+srv://aswin:Aswin2024@snapandsnack.u6op5mg.mongodb.net/snapandsnacks?retryWrites=true&w=majority&appName=snapandsnack', {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+})
   .then(() => console.log('Connected to MongoDB!'))
   .catch(err => console.error('Connection error:', err));
 

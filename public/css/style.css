@@ -1456,6 +1456,16 @@ html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }
   padding: 4rem 0;
   background: var(--ink);
 }
+html.dark .newsletter-section {
+  background: #0d0b09;
+}
+html.dark .newsletter-text h2 {
+  color: #fff;
+}
+html.dark .newsletter-text p {
+  color: #a09890;
+}
+
 .newsletter-box {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1478,6 +1488,10 @@ html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }
 .newsletter-form {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.newsletter-form input {
+  min-width: 200px;
 }
 .newsletter-form input {
   flex: 1;
@@ -1536,7 +1550,7 @@ html.dark .comment-reply { background: #2a1f1a; border-color: var(--accent); }
   margin-bottom: 1.5rem;
 }
 html.dark .newsletter-popup-box { background: #1a1814; }
-html.dark .newsletter-popup-box h3 { color: #0c0c0c; }
+html.dark .newsletter-popup-box h3 { color: #c0bdbd; }
 
 @media (max-width: 640px) {
   .newsletter-box { grid-template-columns: 1fr; gap: 1.5rem; }
