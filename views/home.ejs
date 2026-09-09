@@ -331,32 +331,33 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
   <footer class="footer">
-    <div class="container">
-      <div class="footer-inner">
-        <div>
-          <div class="footer-logo">Snap &amp; <span>Snack</span></div>
-          <p class="footer-desc">A travel, food & lifestyle blog. Eating well and photographing everything along the way.</p>
-        </div>
-        <div>
-          <div class="footer-heading">Pages</div>
-          <div class="footer-links">
-            <a href="/">Home</a><a href="/blog">Blog</a>
-            <a href="/gallery">Gallery</a><a href="/about">About</a>
-            <a href="/contact">Contact</a>
-          </div>
-        </div>
-        <div>
-          <div class="footer-heading">Categories</div>
-          <div class="footer-links">
-            <a href="/blog?category=Travel">✈️ Travel</a>
-            <a href="/blog?category=Food">🍜 Food</a>
-            <a href="/blog?category=Lifestyle">🌿 Lifestyle</a>
-          </div>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">Snap &amp; <span>Snacks</span></div>
+        <p class="footer-desc">A travel, food & lifestyle blog.</p>
+      </div>
+      <div>
+        <div class="footer-heading">Pages</div>
+        <div class="footer-links">
+          <a href="/">Home</a>
+          <a href="/blog">Blog</a>
+          <a href="/gallery">Gallery</a>
+          <a href="/about">About</a>
+          <a href="/contact">Contact</a>
         </div>
       </div>
-      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snack · Built with Laziness</div>
+      <div>
+        <div class="footer-heading">Legal</div>
+        <div class="footer-links">
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms & Conditions</a>
+        </div>
+      </div>
     </div>
-  </footer>
+    <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks · <a href="/privacy" style="color:#a09890">Privacy Policy</a> · <a href="/terms" style="color:#a09890">Terms & Conditions</a></div>
+  </div>
+</footer>
 
   <script>
     function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
