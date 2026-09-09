@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms & Conditions — Snap & Snacks</title>
+  <meta name="description" content="Terms and Conditions for Snap & Snacks blog.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+          <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+        </div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </nav>
+
+  <div class="container-sm" style="padding-top:3rem;padding-bottom:4rem">
+    <h1 style="font-family:var(--serif);font-size:2rem;font-weight:700;margin-bottom:0.5rem">Terms & Conditions</h1>
+    <p style="color:var(--muted);margin-bottom:2rem">Last updated: July 2026</p>
+
+    <div class="policy-content">
+
+      <div class="policy-section">
+        <h2>1. Acceptance of terms</h2>
+        <p>By accessing and using Snap & Snacks (<a href="https://snapandsnacks.com">snapandsnacks.com</a>), you agree to be bound by these Terms & Conditions. If you do not agree, please do not use this website.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>2. Content</h2>
+        <p>All content on this blog — including text, photos, and videos — is owned by Snap & Snacks unless otherwise stated. You may not reproduce, distribute, or use our content without written permission.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>3. Comments</h2>
+        <p>By leaving a comment, you agree that:</p>
+        <ul>
+          <li>Your comment is respectful and not offensive</li>
+          <li>You will not post spam or promotional content</li>
+          <li>We reserve the right to delete any comment at any time</li>
+          <li>Your name will be displayed publicly with your comment</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>4. Newsletter</h2>
+        <p>By subscribing to our newsletter, you agree to receive occasional emails about new blog posts. You can unsubscribe at any time by contacting us through our <a href="/contact">contact page</a>.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>5. Disclaimer</h2>
+        <p>The information on this blog is for general informational purposes only. We make no guarantees about the accuracy, completeness, or reliability of any information. Travel conditions, prices, and restaurant details may change — always verify before visiting.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>6. External links</h2>
+        <p>Our blog may contain links to external websites. We are not responsible for the content or privacy practices of those sites.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>7. Photos</h2>
+        <p>All photos on this blog are taken by Anish unless otherwise credited. Please do not use our photos without permission. Contact us if you would like to use any image.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>8. Changes to terms</h2>
+        <p>We reserve the right to update these terms at any time. Continued use of the website after changes means you accept the new terms.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>9. Contact</h2>
+        <p>For any questions about these terms, please <a href="/contact">contact us</a>.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-logo">Snap &amp; <span>Snacks</span></div>
+          <p class="footer-desc">A travel, food & lifestyle blog.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Pages</div>
+          <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/blog">Blog</a>
+            <a href="/gallery">Gallery</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Legal</div>
+          <div class="footer-links">
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms & Conditions</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks · <a href="/privacy" style="color:#a09890">Privacy Policy</a> · <a href="/terms" style="color:#a09890">Terms & Conditions</a></div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('dark-toggle').classList.toggle('on', isDark);
+      document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('dark-toggle').classList.add('on');
+      document.getElementById('toggle-thumb').textContent = '🌙';
+    }
+  </script>
+
+</body>
+</html>
