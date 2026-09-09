@@ -1557,6 +1557,41 @@ html.dark .newsletter-popup-box h3 { color: #c0bdbd; }
   .newsletter-form { flex-direction: column; }
 }
 
+
+/* ─── Policy pages ───────────────────────────────────────────────── */
+.policy-content { display: flex; flex-direction: column; gap: 0; }
+.policy-section {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.policy-section:last-child { border-bottom: none; }
+.policy-section h2 {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+}
+.policy-section p {
+  color: var(--muted);
+  line-height: 1.8;
+  font-weight: 300;
+  margin-bottom: 0.75rem;
+}
+.policy-section p:last-child { margin-bottom: 0; }
+.policy-section ul {
+  list-style: disc;
+  margin-left: 1.5rem;
+  color: var(--muted);
+  line-height: 1.8;
+  font-weight: 300;
+}
+.policy-section ul li { margin-bottom: 0.35rem; }
+.policy-section a { color: var(--accent); text-decoration: underline; }
+html.dark .policy-section h2 { color: #e8e0d8; }
+
+
+
 /* ─── Enhanced post content ──────────────────────────────────────── */
 .post-h4 {
   font-family: var(--serif);

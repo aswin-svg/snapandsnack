@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy — Snap & Snacks</title>
+  <meta name="description" content="Privacy Policy for Snap & Snacks blog.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/blog">Blog</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/about">About</a>
+        <a href="/contact">Contact</a>
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+          <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+        </div>
+      </div>
+      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+    </div>
+    <div class="nav-mobile" id="nav-mobile">
+      <a href="/">Home</a>
+      <a href="/blog">Blog</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/about">About</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </nav>
+
+  <div class="container-sm" style="padding-top:3rem;padding-bottom:4rem">
+    <h1 style="font-family:var(--serif);font-size:2rem;font-weight:700;margin-bottom:0.5rem">Privacy Policy</h1>
+    <p style="color:var(--muted);margin-bottom:2rem">Last updated: July 2026</p>
+
+    <div class="policy-content">
+
+      <div class="policy-section">
+        <h2>1. Who we are</h2>
+        <p>Snap & Snacks (<a href="https://snapandsnacks.com">snapandsnacks.com</a>) is a personal travel, food and lifestyle blog run by Anish. We are committed to protecting your privacy.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>2. What information we collect</h2>
+        <p>We collect the following information when you interact with our website:</p>
+        <ul>
+          <li><strong>Comments:</strong> Your name and comment text when you leave a comment on a post</li>
+          <li><strong>Contact form:</strong> Your name, email address and message when you contact us</li>
+          <li><strong>Newsletter:</strong> Your email address when you subscribe to our newsletter</li>
+          <li><strong>Analytics:</strong> Anonymous usage data via Google Analytics (pages visited, time spent, device type)</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>3. How we use your information</h2>
+        <ul>
+          <li>To display your comments on blog posts</li>
+          <li>To respond to your messages and enquiries</li>
+          <li>To send you blog updates if you subscribed to our newsletter</li>
+          <li>To understand how visitors use our website and improve our content</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>4. Google Analytics</h2>
+        <p>We use Google Analytics to understand how visitors interact with our website. Google Analytics collects anonymous data such as your IP address, browser type, pages visited, and time spent on the site. This data is processed by Google. You can opt out by installing the <a href="https://tools.google.com/dlpage/gaoptout" target="_blank">Google Analytics Opt-out Browser Add-on</a>.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>5. Cookies</h2>
+        <p>Our website uses the following cookies:</p>
+        <ul>
+          <li><strong>Session cookie:</strong> Used to remember your login status (admin only)</li>
+          <li><strong>Dark mode preference:</strong> Stored in your browser's local storage</li>
+          <li><strong>Google Analytics cookies:</strong> Used to track anonymous website usage</li>
+        </ul>
+      </div>
+
+      <div class="policy-section">
+        <h2>6. Data storage</h2>
+        <p>Your data is stored securely in our database hosted on MongoDB Atlas with industry-standard encryption. We do not sell, trade, or share your personal information with third parties except as described in this policy.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>7. Newsletter unsubscribe</h2>
+        <p>You can unsubscribe from our newsletter at any time by contacting us at our <a href="/contact">contact page</a>. We will remove your email from our list within 48 hours.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>8. Your rights</h2>
+        <p>You have the right to:</p>
+        <ul>
+          <li>Request access to your personal data</li>
+          <li>Request deletion of your personal data</li>
+          <li>Withdraw consent at any time</li>
+        </ul>
+        <p>To exercise these rights, please <a href="/contact">contact us</a>.</p>
+      </div>
+
+      <div class="policy-section">
+        <h2>9. Contact</h2>
+        <p>If you have any questions about this privacy policy, please <a href="/contact">contact us</a>.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div>
+          <div class="footer-logo">Snap &amp; <span>Snacks</span></div>
+          <p class="footer-desc">A travel, food & lifestyle blog.</p>
+        </div>
+        <div>
+          <div class="footer-heading">Pages</div>
+          <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/blog">Blog</a>
+            <a href="/gallery">Gallery</a>
+            <a href="/about">About</a>
+            <a href="/contact">Contact</a>
+          </div>
+        </div>
+        <div>
+          <div class="footer-heading">Legal</div>
+          <div class="footer-links">
+            <a href="/privacy">Privacy Policy</a>
+            <a href="/terms">Terms & Conditions</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks · <a href="/privacy" style="color:#a09890">Privacy Policy</a> · <a href="/terms" style="color:#a09890">Terms & Conditions</a></div>
+    </div>
+  </footer>
+
+  <script>
+    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    window.addEventListener('scroll', () => {
+      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
+    });
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function toggleDark() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('dark-toggle').classList.toggle('on', isDark);
+      document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+    }
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.getElementById('dark-toggle').classList.add('on');
+      document.getElementById('toggle-thumb').textContent = '🌙';
+    }
+  </script>
+
+</body>
+</html>
