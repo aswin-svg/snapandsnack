@@ -322,6 +322,7 @@ app.get('/admin/newsletter', requireLogin, async (req, res) => {
   }
   res.render('admin/newsletter', { subscribers });
 });
+
 app.get('/privacy', (req, res) => res.render('privacy'));
 app.get('/terms',   (req, res) => res.render('terms'));
 app.get('/about',   (req, res) => res.render('about'));

@@ -108,7 +108,35 @@
       document.getElementById('dark-toggle').classList.add('on');
       document.getElementById('toggle-thumb').textContent = '🌙';
     }
+
+// Cookie consent
+function acceptCookies() {
+  localStorage.setItem('cookieConsent', 'accepted');
+  document.getElementById('cookie-banner').classList.remove('show');
+}
+function declineCookies() {
+  localStorage.setItem('cookieConsent', 'declined');
+  document.getElementById('cookie-banner').classList.remove('show');
+}
+// Show banner if no choice made yet
+if (!localStorage.getItem('cookieConsent')) {
+  setTimeout(() => {
+    document.getElementById('cookie-banner').classList.add('show');
+  }, 1500);
+}
+
   </script>
+
+<!-- Cookie consent banner -->
+<div class="cookie-banner" id="cookie-banner">
+  <div class="cookie-content">
+    <p>🍪 We use cookies to improve your experience and analyze traffic. See our <a href="/privacy">Privacy Policy</a>.</p>
+    <div class="cookie-buttons">
+      <button class="btn btn-outline btn-sm" onclick="declineCookies()">Decline</button>
+      <button class="btn btn-accent btn-sm" onclick="acceptCookies()">Accept</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
