@@ -23,6 +23,9 @@ Download from https://nodejs.org (choose LTS version) and install it.
 npm install
 ```
 
+### Step 3a — Configure production secrets
+Before deploying, set `NODE_ENV=production`, `SESSION_SECRET`, and `ADMIN_PASSWORD` in your hosting provider's environment settings. Copy `.env.example` as a reference; do not commit a real `.env` file.
+
 ### Step 4 — Start your blog
 ```
 npm start
@@ -36,7 +39,7 @@ npm start
 | Gallery | http://localhost:3000/gallery |
 | Admin panel | http://localhost:3000/admin |
 
-**Admin login:** username = `admin`, password = `admin123`
+For a fresh local database, the development login is `admin` / `admin123`. Change it immediately through **Admin → Password**. Production refuses to create an admin account unless `ADMIN_PASSWORD` is configured.
 
 ## How to write a post
 1. Go to http://localhost:3000/admin
@@ -76,9 +79,4 @@ snap-and-snack/
 ```
 
 ## Changing your password
-Open `app.js` and find this line:
-```js
-db.data ||= { ..., admin: { username: 'admin', password: bcrypt.hashSync('admin123', 10) } };
-```
-Change `'admin'` and `'admin123'` to your preferred credentials.
-Then delete `blog.json` and restart with `npm start`.
+Sign in to `/admin`, open **Password**, and choose a unique password of at least 12 characters. Do not delete `blog.json`; it contains your posts and settings.

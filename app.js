@@ -1,5 +1,7 @@
 const express = require('express');
+const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -25,6 +27,12 @@ const path = require('path');
 const fs = require('fs');
 let sharp;
 try { sharp = require('sharp'); } catch (e) { sharp = null; }
+
+const isProduction = process.env.NODE_ENV === 'production';
+const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+if (!process.env.SESSION_SECRET) {
+  console.warn('SESSION_SECRET is not set; sessions will be invalidated when the server restarts.');
+}
 
 // ─── Detect environment ───────────────────────────────────────────
 const USE_MONGO = !!process.env.MONGODB_URI;
@@ -62,11 +70,21 @@ if (USE_MONGO) {
 // ─── JSON Database (local fallback) ───────────────────────────────
 const DB_FILE = path.join(__dirname, 'blog.json');
 
+function initialAdmin() {
+  const username = process.env.ADMIN_USERNAME || 'admin';
+  const password = process.env.ADMIN_PASSWORD;
+  if (!password && isProduction) {
+    throw new Error('ADMIN_PASSWORD must be set before starting in production.');
+  }
+  if (!password) console.warn('Using the development-only default admin password. Change it before deployment.');
+  return { username, password: bcrypt.hashSync(password || 'admin123', 12) };
+}
+
 function readDB() {
   if (!fs.existsSync(DB_FILE)) {
     const initial = {
       posts: [], gallery: [],
-      admin: { username: 'admin', password: bcrypt.hashSync('admin123', 10) }
+      admin: initialAdmin()
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2));
     return initial;
@@ -74,7 +92,7 @@ function readDB() {
   const data = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
   if (!data.posts)   data.posts   = [];
   if (!data.gallery) data.gallery = [];
-  if (!data.admin)   data.admin   = { username: 'admin', password: bcrypt.hashSync('admin123', 10) };
+  if (!data.admin)   data.admin   = initialAdmin();
   return data;
 }
 function writeDB(data) {
@@ -82,13 +100,16 @@ function writeDB(data) {
 }
 
 // ─── Image conversion ─────────────────────────────────────────────
-async function convertToJpg(filePath) {
+async function convertToJpg(file) {
   if (!sharp) return; // skip if sharp not available
   try {
-    const tmpPath = filePath + '_tmp.jpg';
-    await sharp(filePath).rotate().jpeg({ quality: 88 }).toFile(tmpPath);
-    fs.unlinkSync(filePath);
-    fs.renameSync(tmpPath, filePath);
+    const finalPath = path.join(path.dirname(file.path), path.parse(file.filename).name + '.jpg');
+    const tmpPath = finalPath + '.tmp.jpg';
+    await sharp(file.path).rotate().jpeg({ quality: 88 }).toFile(tmpPath);
+    fs.unlinkSync(file.path);
+    fs.renameSync(tmpPath, finalPath);
+    file.path = finalPath;
+    file.filename = path.basename(finalPath);
   } catch (err) {
     console.error('Image conversion error:', err.message);
   }
@@ -97,10 +118,34 @@ async function convertToJpg(filePath) {
 // ─── App ──────────────────────────────────────────────────────────
 const app = express();
 app.set('view engine', 'ejs');
-app.set('views', './views');
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static('public'));
-app.use(session({ secret: process.env.SESSION_SECRET || 'snapsnack-secret-key', resave: false, saveUninitialized: false }));
+app.set('views', path.join(__dirname, 'views'));
+app.set('trust proxy', 1);
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(express.urlencoded({ extended: false, limit: '100kb', parameterLimit: 100 }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', etag: true }));
+app.use(session({
+  name: 'snapandsnack.sid', secret: sessionSecret, resave: false, saveUninitialized: false,
+  cookie: { httpOnly: true, sameSite: 'lax', secure: isProduction, maxAge: 1000 * 60 * 60 * 8 }
+}));
+
+function csrfToken(req) {
+  if (!req.session.csrfToken) req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  return req.session.csrfToken;
+}
+function csrfProtection(req, res, next) {
+  res.locals.csrfToken = csrfToken(req);
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    return next();
+  }
+  const supplied = (req.body && req.body._csrf) || req.query._csrf;
+  const expected = req.session.csrfToken;
+  if (typeof supplied === 'string' && typeof expected === 'string' &&
+      supplied.length === expected.length && crypto.timingSafeEqual(Buffer.from(supplied), Buffer.from(expected))) {
+    return next();
+  }
+  return res.status(403).send('Invalid or missing form token. Please refresh the page and try again.');
+}
+app.use('/admin', csrfProtection);
 
 // ─── Uploads ──────────────────────────────────────────────────────
 const postStorage = multer.diskStorage({
@@ -112,9 +157,10 @@ const galleryStorage = multer.diskStorage({
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
 const imageFilter = (req, file, cb) => {
-  const allowed = /jpeg|jpg|png|gif|webp/i;
-  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
-  const mime = allowed.test(file.mimetype);
+  const allowedExtensions = new Set(['.jpeg', '.jpg', '.png', '.gif', '.webp']);
+  const allowedMimes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+  const ext = allowedExtensions.has(path.extname(file.originalname).toLowerCase());
+  const mime = allowedMimes.has(file.mimetype);
   if (ext && mime) {
     cb(null, true);
   } else {
@@ -129,6 +175,37 @@ const uploadGallery = multer({ storage: galleryStorage, limits: { fileSize: 10 *
 function requireLogin(req, res, next) {
   if (req.session.loggedIn) return next();
   res.redirect('/admin/login');
+}
+function cleanText(value, maxLength) {
+  return typeof value === 'string' ? value.replace(/\0/g, '').trim().slice(0, maxLength) : '';
+}
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+}
+function isImageFile(filePath) {
+  const bytes = fs.readFileSync(filePath).subarray(0, 12);
+  const jpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const png = bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  const gif = bytes.subarray(0, 6).toString('ascii') === 'GIF87a' || bytes.subarray(0, 6).toString('ascii') === 'GIF89a';
+  const webp = bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP';
+  return jpeg || png || gif || webp;
+}
+function verifyImageUploads(req, res, next) {
+  const files = req.files || [];
+  if (files.every(file => isImageFile(file.path))) return next();
+  files.forEach(file => { if (fs.existsSync(file.path)) fs.unlinkSync(file.path); });
+  return res.status(400).send('Only valid image files are allowed.');
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+function safeUrl(value) {
+  const url = String(value).trim();
+  if (url.startsWith('/uploads/') || url.startsWith('/gallery-uploads/')) return url;
+  try {
+    const parsed = new URL(url);
+    return ['http:', 'https:', 'mailto:'].includes(parsed.protocol) ? url : '#';
+  } catch { return '#'; }
 }
 function slugify(text) {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
@@ -150,8 +227,8 @@ function processInlineImages(content, files) {
 }
 function renderContent(text) {
   if (!text) return '';
-  return text
-    .replace(/\[image:([^\]]+)\]/g, '</p><img src="$1" alt="Post image" class="inline-post-img"><p>')
+  return escapeHtml(text)
+    .replace(/\[image:([^\]]+)\]/g, (match, src) => '</p><img src="' + safeUrl(src) + '" alt="Post image" class="inline-post-img"><p>')
     .replace(/^#### (.+)$/gm, '<h4 class="post-h4">$1</h4>')
     .replace(/^### (.+)$/gm, '<h3 class="post-h3">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="post-h2">$1</h2>')
@@ -162,7 +239,7 @@ function renderContent(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/~~(.+?)~~/g, '<del>$1</del>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="post-link-inline">$1</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => '<a href="' + safeUrl(url) + '" target="_blank" rel="noopener noreferrer" class="post-link-inline">' + label + '</a>')
     .replace(/\n/g, '<br>')
     .replace(/<br>\[image:/g, '[image:')
     .replace(/\[image:[^\]]+\]<br>/g, '');
@@ -246,22 +323,24 @@ app.get('/post/:slug', async (req, res) => {
   } catch (err) { res.status(500).render('404'); }
 });
 
-app.post('/post/:slug/comment', async (req, res) => {
-  const { name, email, comment } = req.body;
-  if (!name || !comment) return res.redirect('/post/' + req.params.slug);
+app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
+  const name = cleanText(req.body.name, 80);
+  const email = cleanText(req.body.email, 254);
+  const comment = cleanText(req.body.comment, 2000);
+  if (!name || !comment || (email && !isValidEmail(email))) return res.redirect('/post/' + req.params.slug);
   try {
     if (USE_MONGO) {
       const post = await Post.findOne({ slug: req.params.slug });
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name, email, comment, date: formatDate(new Date()) });
       await post.save();
     } else {
       const db = readDB();
       const post = db.posts.find(p => p.slug === req.params.slug);
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name, email, comment, date: formatDate(new Date()) });
       writeDB(db);
     }
     res.redirect('/post/' + req.params.slug + '#comments');
@@ -318,8 +397,8 @@ app.get('/archive', async (req, res) => {
 });
 
 app.post('/newsletter', async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.redirect('back');
+  const email = cleanText(req.body.email, 254).toLowerCase();
+  if (!isValidEmail(email)) return res.redirect('/');
   if (USE_MONGO) {
     // check if already subscribed
     const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
@@ -338,7 +417,7 @@ app.post('/newsletter', async (req, res) => {
       writeDB(db);
     }
   }
-  res.redirect('back');
+  res.redirect('/');
 });
 
 app.get('/admin/newsletter', requireLogin, async (req, res) => {
@@ -358,16 +437,18 @@ app.get('/terms',   (req, res) => res.render('terms'));
 app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 
-app.post('/contact', async (req, res) => {
-  const { name, email, message } = req.body;
-  if (!name || !email || !message) return res.render('contact', { success: false });
+app.post('/contact', contactLimiter, async (req, res) => {
+  const name = cleanText(req.body.name, 80);
+  const email = cleanText(req.body.email, 254).toLowerCase();
+  const message = cleanText(req.body.message, 5000);
+  if (!name || !isValidEmail(email) || !message) return res.render('contact', { success: false });
   try {
     if (USE_MONGO) {
-      await Message.create({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
+      await Message.create({ id: Date.now(), name, email, message, date: formatDate(new Date()), read: false });
     } else {
       const db = readDB();
       if (!db.messages) db.messages = [];
-      db.messages.push({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
+      db.messages.push({ id: Date.now(), name, email, message, date: formatDate(new Date()), read: false });
       writeDB(db);
     }
     res.render('contact', { success: true });
@@ -389,14 +470,20 @@ app.post('/admin/login', loginLimiter, async (req, res) => {
     if (USE_MONGO) {
       const admin = await Admin.findOne({ username });
       if (admin && bcrypt.compareSync(password, admin.password)) {
-        req.session.loggedIn = true;
-        return res.redirect('/admin');
+        return req.session.regenerate(err => {
+          if (err) return res.render('admin/login', { error: 'Something went wrong.' });
+          req.session.loggedIn = true;
+          res.redirect('/admin');
+        });
       }
     } else {
       const db = readDB();
       if (username === db.admin.username && bcrypt.compareSync(password, db.admin.password)) {
-        req.session.loggedIn = true;
-        return res.redirect('/admin');
+        return req.session.regenerate(err => {
+          if (err) return res.render('admin/login', { error: 'Something went wrong.' });
+          req.session.loggedIn = true;
+          res.redirect('/admin');
+        });
       }
     }
     res.render('admin/login', { error: 'Wrong username or password.' });
@@ -426,13 +513,16 @@ app.get('/admin', requireLogin, async (req, res) => {
 
 app.get('/admin/new', requireLogin, (req, res) => res.render('admin/form', { post: null, error: null }));
 
-app.post('/admin/new', requireLogin, uploadPost.any(), async (req, res) => {
-  const { title, action } = req.body;
-  let { content, category, tags } = req.body;
+app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async (req, res) => {
+  const action = req.body.action;
+  const title = cleanText(req.body.title, 160);
+  let content = cleanText(req.body.content, 100000);
+  const category = cleanText(req.body.category, 50);
+  const tags = cleanText(req.body.tags, 500);
   if (!title || !content) return res.render('admin/form', { post: null, error: 'Title and content are required.' });
   try {
     const files = req.files || [];
-    await Promise.all(files.map(f => convertToJpg(f.path)));
+    await Promise.all(files.map(convertToJpg));
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -465,12 +555,15 @@ app.get('/admin/edit/:id', requireLogin, async (req, res) => {
   } catch (err) { res.redirect('/admin'); }
 });
 
-app.post('/admin/edit/:id', requireLogin, uploadPost.any(), async (req, res) => {
-  const { title, action } = req.body;
-  let { content, category, tags } = req.body;
+app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, async (req, res) => {
+  const action = req.body.action;
+  const title = cleanText(req.body.title, 160);
+  let content = cleanText(req.body.content, 100000);
+  const category = cleanText(req.body.category, 50);
+  const tags = cleanText(req.body.tags, 500);
   try {
     const files = req.files || [];
-    await Promise.all(files.map(f => convertToJpg(f.path)));
+    await Promise.all(files.map(convertToJpg));
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -549,7 +642,7 @@ app.post('/admin/delete/:id', requireLogin, async (req, res) => {
 });
 
 app.post('/admin/comment/reply/:postId/:commentId', requireLogin, async (req, res) => {
-  const { reply } = req.body;
+  const reply = cleanText(req.body.reply, 2000);
   if (!reply) return res.redirect('back');
   if (USE_MONGO) {
     const post = await Post.findOne({ id: Number(req.params.postId) });
@@ -595,9 +688,9 @@ app.get('/admin/gallery', requireLogin, async (req, res) => {
   res.render('admin/gallery', { photos });
 });
 
-app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20), async (req, res) => {
-  const { captions } = req.body;
-  await Promise.all(req.files.map(f => convertToJpg(f.path)));
+app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20), verifyImageUploads, async (req, res) => {
+  const captions = req.body.captions;
+  await Promise.all(req.files.map(convertToJpg));
   if (USE_MONGO) {
     for (let i = 0; i < req.files.length; i++) {
       await Gallery.create({
@@ -623,12 +716,13 @@ app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20
 });
 
 app.post('/admin/gallery/edit/:id', requireLogin, async (req, res) => {
+  const caption = cleanText(req.body.caption, 250);
   if (USE_MONGO) {
-    await Gallery.findOneAndUpdate({ id: Number(req.params.id) }, { caption: req.body.caption || '' });
+    await Gallery.findOneAndUpdate({ id: Number(req.params.id) }, { caption });
   } else {
     const db = readDB();
     const photo = db.gallery.find(p => p.id === Number(req.params.id));
-    if (photo) { photo.caption = req.body.caption || ''; writeDB(db); }
+    if (photo) { photo.caption = caption; writeDB(db); }
   }
   res.redirect('/admin/gallery');
 });
@@ -674,7 +768,9 @@ app.get('/admin/password', requireLogin, (req, res) => {
 });
 
 app.post('/admin/password', requireLogin, async (req, res) => {
-  const { current, newpass, confirm } = req.body;
+  const current = typeof req.body.current === 'string' ? req.body.current : '';
+  const newpass = typeof req.body.newpass === 'string' ? req.body.newpass : '';
+  const confirm = typeof req.body.confirm === 'string' ? req.body.confirm : '';
   try {
     let currentHash;
     if (USE_MONGO) {
@@ -686,8 +782,8 @@ app.post('/admin/password', requireLogin, async (req, res) => {
     if (!bcrypt.compareSync(current, currentHash)) {
       return res.render('admin/password', { error: 'Current password is wrong.', success: false });
     }
-    if (newpass.length < 6) {
-      return res.render('admin/password', { error: 'New password must be at least 6 characters.', success: false });
+    if (newpass.length < 12) {
+      return res.render('admin/password', { error: 'New password must be at least 12 characters.', success: false });
     }
     if (newpass !== confirm) {
       return res.render('admin/password', { error: 'New passwords do not match.', success: false });
@@ -729,13 +825,24 @@ app.get('/robots.txt', (req, res) => {
   res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://snapandsnacks.com/sitemap.xml');
 });
 
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).send(err.code === 'LIMIT_FILE_SIZE' ? 'Images must be 10 MB or smaller.' : 'Invalid file upload.');
+  }
+  if (err) {
+    console.error('Request error:', err.message);
+    return res.status(400).send('Unable to process this request.');
+  }
+  next();
+});
+
 // ─── Start ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   if (USE_MONGO) {
     // Create admin if not exists
     const admin = await Admin.findOne({});
-    if (!admin) await Admin.create({ username: 'admin', password: bcrypt.hashSync('admin123', 10) });
+    if (!admin) await Admin.create(initialAdmin());
   }
   console.log('');
   console.log('  ✅  Snap & Snack is live!');

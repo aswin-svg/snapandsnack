@@ -33,7 +33,7 @@
     <!-- Upload form -->
     <div class="form-card" style="margin-bottom:2rem">
       <div class="section-heading">Upload new photos</div>
-      <form method="POST" action="/admin/gallery/upload" enctype="multipart/form-data">
+      <form method="POST" action="/admin/gallery/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
         <div class="form-group">
           <label>Select photos <span class="form-hint">(you can select multiple at once)</span></label>
           <div class="upload-area" onclick="document.getElementById('photo-input').click()">
@@ -66,10 +66,12 @@
             <img src="<%= photo.src %>" alt="<%= photo.caption || 'Photo' %>">
             <div class="photo-admin-footer">
   <form method="POST" action="/admin/gallery/edit/<%= photo.id %>" style="display:flex;gap:6px;align-items:center;flex:1">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <input type="text" name="caption" value="<%= photo.caption || '' %>" placeholder="Add caption..." style="font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;width:100%;font-family:inherit">
     <button type="submit" class="btn btn-sm btn-outline">Save</button>
   </form>
   <form method="POST" action="/admin/gallery/delete/<%= photo.id %>" onsubmit="return confirm('Delete this photo?')">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
   </form>
 </div>

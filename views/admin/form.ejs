@@ -92,7 +92,7 @@
 
     <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
 
-    <form method="POST" action="<%= post ? '/admin/edit/' + post.id : '/admin/new' %>" enctype="multipart/form-data" class="form-card" id="post-form">
+    <form method="POST" action="<%= (post ? '/admin/edit/' + post.id : '/admin/new') + '?_csrf=' + encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" class="form-card" id="post-form">
 
       <div class="form-group">
         <label>Post title *</label>
