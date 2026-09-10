@@ -1,4 +1,23 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many login attempts. Please try again after 15 minutes.'
+});
+
+const commentLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 5,
+  message: 'Too many comments. Please wait a minute.'
+});
+
+const contactLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: 'Too many messages. Please try again later.'
+});
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
@@ -92,8 +111,19 @@ const galleryStorage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'public/gallery-uploads/'),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
 });
-const uploadPost    = multer({ storage: postStorage,    limits: { fileSize: 30 * 1024 * 1024 } });
-const uploadGallery = multer({ storage: galleryStorage, limits: { fileSize: 30 * 1024 * 1024 } });
+const imageFilter = (req, file, cb) => {
+  const allowed = /jpeg|jpg|png|gif|webp/i;
+  const ext = allowed.test(path.extname(file.originalname).toLowerCase());
+  const mime = allowed.test(file.mimetype);
+  if (ext && mime) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed!'), false);
+  }
+};
+
+const uploadPost    = multer({ storage: postStorage,    limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadGallery = multer({ storage: galleryStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
 
 // ─── Helpers ──────────────────────────────────────────────────────
 function requireLogin(req, res, next) {
@@ -161,7 +191,7 @@ app.get('/', async (req, res) => {
       categories = [...new Set(posts.map(p => p.category))];
     }
     res.render('home', { posts, latestPhotos, categories });
-  } catch (err) { res.status(500).send('Error: ' + err.message); }
+  } catch (err) { res.status(500).render('404'); }
 });
 
 app.get('/blog', async (req, res) => {
@@ -189,7 +219,7 @@ app.get('/blog', async (req, res) => {
       categories = [...new Set(db.posts.filter(p => p.status !== 'draft').map(p => p.category))];
     }
     res.render('blog', { posts, categories, activeCategory: category || '', search: search || '' });
-  } catch (err) { res.status(500).send('Error: ' + err.message); }
+  } catch (err) { res.status(500).render('404'); }
 });
 
 app.get('/post/:slug', async (req, res) => {
@@ -213,7 +243,7 @@ app.get('/post/:slug', async (req, res) => {
     const words = post.content.split(/\s+/).length;
     const readTime = Math.max(1, Math.round(words / 200));
     res.render('post', { post, related, readTime, renderContent });
-  } catch (err) { res.status(500).send('Error: ' + err.message); }
+  } catch (err) { res.status(500).render('404'); }
 });
 
 app.post('/post/:slug/comment', async (req, res) => {
@@ -244,7 +274,7 @@ app.get('/gallery', async (req, res) => {
       ? await Gallery.find().sort({ id: -1 })
       : [...readDB().gallery].reverse();
     res.render('gallery', { photos });
-  } catch (err) { res.status(500).send('Error: ' + err.message); }
+  } catch (err) { res.status(500).render('404'); }
 });
 
 app.get('/tags', async (req, res) => {
@@ -353,7 +383,7 @@ app.get('/admin/login', (req, res) => {
   res.render('admin/login', { error: null });
 });
 
-app.post('/admin/login', async (req, res) => {
+app.post('/admin/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   try {
     if (USE_MONGO) {
@@ -391,7 +421,7 @@ app.get('/admin', requireLogin, async (req, res) => {
       unreadMessages = (db.messages || []).filter(m => !m.read).length;
     }
     res.render('admin/dashboard', { posts, drafts, photoCount, unreadMessages });
-  } catch (err) { res.status(500).send('Error: ' + err.message); }
+  } catch (err) { res.status(500).render('404'); }
 });
 
 app.get('/admin/new', requireLogin, (req, res) => res.render('admin/form', { post: null, error: null }));
