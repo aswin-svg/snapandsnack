@@ -20,6 +20,14 @@ const contactLimiter = rateLimit({
   max: 5,
   message: 'Too many messages. Please try again later.'
 });
+
+const newsletterLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: 'Too many newsletter requests. Please try again later.'
+});
+
+
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
@@ -120,7 +128,22 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', 1);
-app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      fontSrc: ["'self'", "data:"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'self'"],
+      formAction: ["'self'"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
 app.use(express.urlencoded({ extended: false, limit: '100kb', parameterLimit: 100 }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', etag: true }));
 app.use(session({
@@ -396,7 +419,7 @@ app.get('/archive', async (req, res) => {
   res.render('archive', { archive });
 });
 
-app.post('/newsletter', async (req, res) => {
+app.post('/newsletter', newsletterLimiter, async (req, res) => {
   const email = cleanText(req.body.email, 254).toLowerCase();
   if (!isValidEmail(email)) return res.redirect('/');
   if (USE_MONGO) {
@@ -821,6 +844,13 @@ app.get('/sitemap.xml', async (req, res) => {
 });
 
 app.get('/robots.txt', (req, res) => {
+  app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime())
+  });
+});
   res.type('text/plain');
   res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://snapandsnacks.com/sitemap.xml');
 });
