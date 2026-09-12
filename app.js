@@ -251,7 +251,7 @@ function processInlineImages(content, files) {
 function renderContent(text) {
   if (!text) return '';
   return escapeHtml(text)
-    .replace(/\[image:([^\]]+)\]/g, (match, src) => '</p><img src="' + safeUrl(src) + '" alt="Post image" class="inline-post-img"><p>')
+    .replace(/\[image:([^\]]+)\]/g, '</p><img src="$1" alt="Photo from Snap & Snacks" class="inline-post-img" loading="lazy"><p>')
     .replace(/^#### (.+)$/gm, '<h4 class="post-h4">$1</h4>')
     .replace(/^### (.+)$/gm, '<h3 class="post-h3">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="post-h2">$1</h2>')

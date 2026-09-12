@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <% (recent.length > 0 ? recent : posts.slice(0,6)).forEach(post => { %>
             <article class="post-card">
               <% if (post.image) { %>
-                <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img"></a>
+                <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img" loading="lazy"></a>
               <% } else { %>
                 <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
               <% } %>
