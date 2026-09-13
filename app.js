@@ -383,10 +383,9 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       if (!post.comments) post.comments = [];
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       await post.save();
-      // Send notification
       sendNotification(
         `💬 New comment on "${post.title}"`,
-        `<h2>New comment on your blog!</h2>
+        `<h2>New comment!</h2>
         <p><strong>Post:</strong> ${post.title}</p>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email || 'Not provided'}</p>
@@ -398,7 +397,7 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       const post = db.posts.find(p => p.slug === req.params.slug);
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name, email, comment, date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       writeDB(db);
     }
     res.redirect('/post/' + req.params.slug + '#comments');
@@ -467,7 +466,6 @@ app.post('/newsletter', newsletterLimiter, async (req, res) => {
           email: email.trim(), message: 'Newsletter subscriber',
           date: formatDate(new Date()), read: false
         });
-        // Send notification
         sendNotification(
           `📧 New newsletter subscriber!`,
           `<h2>New subscriber!</h2>
@@ -475,15 +473,16 @@ app.post('/newsletter', newsletterLimiter, async (req, res) => {
           <a href="https://snapandsnacks.com/admin/newsletter">View subscribers →</a>`
         );
       }
-  } else {
-    const db = readDB();
-    if (!db.newsletter) db.newsletter = [];
-    if (!db.newsletter.includes(email.trim())) {
-      db.newsletter.push(email.trim());
-      writeDB(db);
+    } else {
+      const db = readDB();
+      if (!db.newsletter) db.newsletter = [];
+      if (!db.newsletter.includes(email.trim())) {
+        db.newsletter.push(email.trim());
+        writeDB(db);
+      }
     }
-  }
-  res.redirect('/');
+    res.redirect('back');
+  } catch (err) { res.redirect('back'); }
 });
 
 app.get('/admin/newsletter', requireLogin, async (req, res) => {
@@ -510,10 +509,9 @@ app.post('/contact', contactLimiter, async (req, res) => {
   try {
     if (USE_MONGO) {
       await Message.create({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
-      // Send notification
       sendNotification(
         `📩 New contact message from ${name}`,
-        `<h2>New message on your blog!</h2>
+        `<h2>New message!</h2>
         <p><strong>Name:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Message:</strong> ${message}</p>
@@ -522,7 +520,7 @@ app.post('/contact', contactLimiter, async (req, res) => {
     } else {
       const db = readDB();
       if (!db.messages) db.messages = [];
-      db.messages.push({ id: Date.now(), name, email, message, date: formatDate(new Date()), read: false });
+      db.messages.push({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
       writeDB(db);
     }
     res.render('contact', { success: true });
