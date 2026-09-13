@@ -384,6 +384,21 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       await post.save();
       sendNotification(
+        async function sendNotification(subject, html) {
+  console.log('📧 Attempting to send email...', process.env.GMAIL_USER ? 'Gmail configured' : 'NO GMAIL CONFIG');
+  if (!process.env.GMAIL_USER) return;
+  try {
+    await transporter.sendMail({
+      from: `"Snap & Snacks" <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
+      subject,
+      html
+    });
+    console.log('📧 Notification sent!');
+  } catch (err) {
+    console.error('📧 Email error:', err.message);
+  }
+}
         `💬 New comment on "${post.title}"`,
         `<h2>New comment!</h2>
         <p><strong>Post:</strong> ${post.title}</p>
