@@ -1,4 +1,30 @@
 const express = require('express');
+
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+});
+
+async function sendNotification(subject, html) {
+  if (!process.env.GMAIL_USER) return;
+  try {
+    await transporter.sendMail({
+      from: `"Snap & Snacks" <${process.env.GMAIL_USER}>`,
+      to: process.env.GMAIL_USER,
+      subject,
+      html
+    });
+    console.log('📧 Notification sent!');
+  } catch (err) {
+    console.error('📧 Email error:', err.message);
+  }
+}
+
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
@@ -347,17 +373,26 @@ app.get('/post/:slug', async (req, res) => {
 });
 
 app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
-  const name = cleanText(req.body.name, 80);
-  const email = cleanText(req.body.email, 254);
-  const comment = cleanText(req.body.comment, 2000);
-  if (!name || !comment || (email && !isValidEmail(email))) return res.redirect('/post/' + req.params.slug);
+  const { name, email, comment } = req.body;
+  if (!name || !comment) return res.redirect('/post/' + req.params.slug);
+  if (name.length > 100 || comment.length > 2000) return res.redirect('/post/' + req.params.slug);
   try {
     if (USE_MONGO) {
       const post = await Post.findOne({ slug: req.params.slug });
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name, email, comment, date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       await post.save();
+      // Send notification
+      sendNotification(
+        `💬 New comment on "${post.title}"`,
+        `<h2>New comment on your blog!</h2>
+        <p><strong>Post:</strong> ${post.title}</p>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email || 'Not provided'}</p>
+        <p><strong>Comment:</strong> ${comment}</p>
+        <a href="https://snapandsnacks.com/post/${post.slug}">View post →</a>`
+      );
     } else {
       const db = readDB();
       const post = db.posts.find(p => p.slug === req.params.slug);
@@ -420,18 +455,26 @@ app.get('/archive', async (req, res) => {
 });
 
 app.post('/newsletter', newsletterLimiter, async (req, res) => {
-  const email = cleanText(req.body.email, 254).toLowerCase();
-  if (!isValidEmail(email)) return res.redirect('/');
-  if (USE_MONGO) {
-    // check if already subscribed
-    const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
-    if (!exists) {
-      await Message.create({
-        id: Date.now(), name: 'newsletter',
-        email: email.trim(), message: 'Newsletter subscriber',
-        date: formatDate(new Date()), read: false
-      });
-    }
+  const { email } = req.body;
+  if (!email || !email.includes('@')) return res.redirect('back');
+  if (email.length > 200) return res.redirect('back');
+  try {
+    if (USE_MONGO) {
+      const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
+      if (!exists) {
+        await Message.create({
+          id: Date.now(), name: 'newsletter',
+          email: email.trim(), message: 'Newsletter subscriber',
+          date: formatDate(new Date()), read: false
+        });
+        // Send notification
+        sendNotification(
+          `📧 New newsletter subscriber!`,
+          `<h2>New subscriber!</h2>
+          <p><strong>Email:</strong> ${email}</p>
+          <a href="https://snapandsnacks.com/admin/newsletter">View subscribers →</a>`
+        );
+      }
   } else {
     const db = readDB();
     if (!db.newsletter) db.newsletter = [];
@@ -461,13 +504,21 @@ app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 
 app.post('/contact', contactLimiter, async (req, res) => {
-  const name = cleanText(req.body.name, 80);
-  const email = cleanText(req.body.email, 254).toLowerCase();
-  const message = cleanText(req.body.message, 5000);
-  if (!name || !isValidEmail(email) || !message) return res.render('contact', { success: false });
+  const { name, email, message } = req.body;
+  if (!name || !email || !message) return res.render('contact', { success: false });
+  if (name.length > 100 || message.length > 5000) return res.render('contact', { success: false });
   try {
     if (USE_MONGO) {
-      await Message.create({ id: Date.now(), name, email, message, date: formatDate(new Date()), read: false });
+      await Message.create({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
+      // Send notification
+      sendNotification(
+        `📩 New contact message from ${name}`,
+        `<h2>New message on your blog!</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong> ${message}</p>
+        <a href="https://snapandsnacks.com/admin/messages">View in admin →</a>`
+      );
     } else {
       const db = readDB();
       if (!db.messages) db.messages = [];
