@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <a href="/gallery">Gallery</a>
         <a href="/about">About</a>
         <a href="/contact">Contact</a>
-        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
   <div class="toggle-thumb" id="toggle-thumb">☀️</div>
 </div>
 </div>
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <a href="/gallery">Gallery</a>
       <a href="/about">About</a>
       <a href="/contact">Contact</a>
-      <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+      <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
   <div class="toggle-thumb" id="toggle-thumb">☀️</div>
 </div>
 </div>
