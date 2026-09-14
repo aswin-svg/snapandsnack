@@ -42,7 +42,7 @@
         <a href="/gallery">Gallery</a>
         <a href="/about" class="active">About</a>
         <a href="/contact">Contact</a>
-        <div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
+        <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
   <div class="toggle-thumb" id="toggle-thumb">☀️</div>
 </div>
 </div>
@@ -55,7 +55,7 @@
       <a href="/gallery">Gallery</a>
       <a href="/about">About</a>
       <a href="/contact">Contact</a>
-      <<div class="toggle-track" id="dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
+      <<div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
   <div class="toggle-thumb" id="toggle-thumb">☀️</div>
 </div>
 </div>
@@ -146,16 +146,16 @@
       document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
     });
     function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    function toggleDark() {
+  function toggleDark() {
   const isDark = document.documentElement.classList.toggle('dark');
   localStorage.setItem('darkMode', isDark);
-  document.getElementById('dark-toggle').classList.toggle('on', isDark);
-  document.getElementById('toggle-thumb').textContent = isDark ? '🌙' : '☀️';
+  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.toggle('on', isDark));
+  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = isDark ? '🌙' : '☀️');
 }
 if (localStorage.getItem('darkMode') === 'true') {
   document.documentElement.classList.add('dark');
-  document.getElementById('dark-toggle').classList.add('on');
-  document.getElementById('toggle-thumb').textContent = '🌙';
+  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.add('on'));
+  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = '🌙');
 }
 
 // Cookie consent
