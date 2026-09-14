@@ -11,10 +11,11 @@ const transporter = nodemailer.createTransport({
 });
 
 async function sendNotification(subject, html) {
+  console.log('📧 Attempting to send email...', process.env.GMAIL_USER ? 'Gmail configured' : 'NO GMAIL CONFIG');
   if (!process.env.GMAIL_USER) return;
   try {
     await transporter.sendMail({
-      from: `"Snap & Snacks" <${process.env.GMAIL_USER}>`,
+      from: '"Snap & Snacks" <' + process.env.GMAIL_USER + '>',
       to: process.env.GMAIL_USER,
       subject,
       html
@@ -384,7 +385,7 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       await post.save();
       sendNotification(
-        `💬 New comment on "${post.title}"`,
+        `💬 New comment on "${post.title}",`
         `<h2>New comment!</h2>
         <p><strong>Post:</strong> ${post.title}</p>
         <p><strong>Name:</strong> ${name}</p>
@@ -399,15 +400,6 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       if (!post.comments) post.comments = [];
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       writeDB(db);
-      sendNotification(
-        `💬 New comment on "${post.title}"`,
-        `<h2>New comment!</h2>
-        <p><strong>Post:</strong> ${post.title}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email || 'Not provided'}</p>
-        <p><strong>Comment:</strong> ${comment}</p>
-        <a href="https://snapandsnacks.com/post/${post.slug}">View post →</a>`
-      );
     }
     res.redirect('/post/' + req.params.slug + '#comments');
   } catch (err) { res.redirect('/'); }
@@ -423,9 +415,10 @@ app.get('/gallery', async (req, res) => {
 });
 
 app.get('/tags', async (req, res) => {
+  const db = readDB();
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } })
-    : readDB().posts.filter(p => p.status !== 'draft');
+    : db.posts.filter(p => p.status !== 'draft');
   const tagMap = {};
   posts.forEach(post => {
     (post.tags || []).forEach(tag => {
@@ -437,18 +430,20 @@ app.get('/tags', async (req, res) => {
 });
 
 app.get('/tags/:tag', async (req, res) => {
+  const db = readDB();
   const allPosts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } })
-    : readDB().posts.filter(p => p.status !== 'draft');
+    : db.posts.filter(p => p.status !== 'draft');
   const tag = req.params.tag;
   const posts = allPosts.filter(p => (p.tags || []).includes(tag));
   res.render('tag-posts', { tag, posts });
 });
 
 app.get('/archive', async (req, res) => {
+  const db = readDB();
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 })
-    : readDB().posts.filter(p => p.status !== 'draft').reverse();
+    : db.posts.filter(p => p.status !== 'draft').reverse();
   const archive = {};
   posts.forEach(post => {
     const date = new Date(post.id);
@@ -703,6 +698,7 @@ app.post('/admin/unpin/:id', requireLogin, async (req, res) => {
     const db = readDB();
     const post = db.posts.find(p => p.id === Number(req.params.id));
     if (post) { post.pinned = false; writeDB(db); }
+    writeDB(db);
   }
   res.redirect('/admin');
 });
