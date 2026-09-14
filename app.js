@@ -385,7 +385,7 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       await post.save();
       sendNotification(
-        `💬 New comment on "${post.title}",`
+        `💬 New comment on "${post.title}"`,
         `<h2>New comment!</h2>
         <p><strong>Post:</strong> ${post.title}</p>
         <p><strong>Name:</strong> ${name}</p>
@@ -400,6 +400,16 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       if (!post.comments) post.comments = [];
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
       writeDB(db);
+
+      sendNotification(
+  `💬 New comment on "${post.title}"`,
+  `<h2>New comment!</h2>
+  <p><strong>Post:</strong> ${post.title}</p>
+  <p><strong>Name:</strong> ${name}</p>
+  <p><strong>Email:</strong> ${email || 'Not provided'}</p>
+  <p><strong>Comment:</strong> ${comment}</p>
+  <a href="https://snapandsnacks.com/post/${post.slug}">View post →</a>`
+);
     }
     res.redirect('/post/' + req.params.slug + '#comments');
   } catch (err) { res.redirect('/'); }

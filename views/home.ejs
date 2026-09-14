@@ -3,6 +3,7 @@
  <head>
 <meta charset="UTF-8">
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
+<meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Snap & Snack — Travel, Food & Lifestyle</title>
   <meta name="description" content="A travel, food and lifestyle blog by Aswin. Real stories, honest food reviews and photos from around the world.">
@@ -381,13 +382,15 @@ if (localStorage.getItem('darkMode') === 'true') {
 async function handleNewsletter(e) {
   e.preventDefault();
   const email = document.getElementById('newsletter-email').value;
+  const csrf = document.querySelector('meta[name="csrf-token"]');
   try {
+    const body = 'email=' + encodeURIComponent(email) + (csrf ? '&_csrf=' + encodeURIComponent(csrf.content) : '');
     await fetch('/newsletter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'email=' + encodeURIComponent(email)
+      body: body
     });
-    document.getElementById('newsletter-popup').classList.add('open');
+    document.getElementById('newsletter-popup').classList.add('show');
     document.body.style.overflow = 'hidden';
     document.getElementById('newsletter-email').value = '';
   } catch(err) {
