@@ -252,6 +252,7 @@ function escapeHtml(value) {
 function safeUrl(value) {
   const url = String(value).trim();
   if (url.startsWith('/uploads/') || url.startsWith('/gallery-uploads/')) return url;
+  if (url.startsWith('/') && !url.startsWith('//')) return url; // internal links like /post/slug, /blog, /tags/xyz
   try {
     const parsed = new URL(url);
     return ['http:', 'https:', 'mailto:'].includes(parsed.protocol) ? url : '#';
