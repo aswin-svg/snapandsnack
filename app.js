@@ -469,8 +469,8 @@ app.get('/archive', async (req, res) => {
 
 app.post('/newsletter', newsletterLimiter, async (req, res) => {
   const { email } = req.body;
-  if (!email || !email.includes('@')) return res.redirect('back');
-  if (email.length > 200) return res.redirect('back');
+  if (!email || !email.includes('@')) return res.redirect(req.get('Referrer') || '/');
+  if (email.length > 200) return res.redirect(req.get('Referrer') || '/');
   try {
     if (USE_MONGO) {
       const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
@@ -495,8 +495,8 @@ app.post('/newsletter', newsletterLimiter, async (req, res) => {
         writeDB(db);
       }
     }
-    res.redirect('back');
-  } catch (err) { res.redirect('back'); }
+    res.redirect(req.get('Referrer') || '/');
+  } catch (err) { res.redirect(req.get('Referrer') || '/'); }
 });
 
 app.get('/admin/newsletter', requireLogin, async (req, res) => {
@@ -729,7 +729,7 @@ app.post('/admin/delete/:id', requireLogin, async (req, res) => {
 
 app.post('/admin/comment/reply/:postId/:commentId', requireLogin, async (req, res) => {
   const reply = cleanText(req.body.reply, 2000);
-  if (!reply) return res.redirect('back');
+  if (!reply) return res.redirect(req.get('Referrer') || '/');
   if (USE_MONGO) {
     const post = await Post.findOne({ id: Number(req.params.postId) });
     if (post) {
@@ -746,7 +746,7 @@ app.post('/admin/comment/reply/:postId/:commentId', requireLogin, async (req, re
       writeDB(db);
     }
   }
-  res.redirect('back');
+  res.redirect(req.get('Referrer') || '/');
 });
 
 app.post('/admin/comment/delete/:postId/:commentId', requireLogin, async (req, res) => {

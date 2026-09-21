@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
+<script>if(localStorage.getItem('darkMode')==='true')document.documentElement.classList.add('dark');</script>
 <meta charset="UTF-8">
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
 <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>">
@@ -390,7 +391,7 @@ async function handleNewsletter(e) {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body
     });
-    document.getElementById('newsletter-popup').classList.add('show');
+    document.getElementById('newsletter-popup').classList.add('open');
     document.body.style.overflow = 'hidden';
     document.getElementById('newsletter-email').value = '';
   } catch(err) {
