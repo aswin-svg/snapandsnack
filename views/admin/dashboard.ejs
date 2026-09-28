@@ -171,7 +171,7 @@
             <div class="table-row" style="grid-template-columns:auto 1fr auto">
               <div class="comment-avatar" style="width:32px;height:32px;font-size:0.85rem"><%= comment.name.charAt(0).toUpperCase() %></div>
               <div>
-                <div style="font-size:0.9rem;font-weight:500"><%= comment.name %> <span style="color:#9ca3af;font-weight:300;font-size:0.8rem">· <%= comment.date %></span></div>
+                <div style="font-size:0.9rem;font-weight:500"><%= comment.name %> <span style="color:#9ca3af;font-weight:300;font-size:0.8rem">· <%= comment.date %></span><% if (comment.approved === false) { %><span style="background:#fef3c7;color:#92400e;font-size:0.72rem;padding:2px 8px;border-radius:999px;margin-left:6px">⏳ Pending</span><% } %></div>
                 <div style="font-size:0.85rem;color:#6b7280"><%= comment.comment %></div>
               </div>
               <div style="display:flex;flex-direction:column;gap:6px;flex:1">
@@ -185,6 +185,14 @@
     <input type="text" name="reply" placeholder="Write a reply..." style="font-size:0.82rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;flex:1;font-family:inherit">
     <button type="submit" class="btn btn-sm" style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7">Reply</button>
   </form>
+
+    <% if (comment.approved === false) { %>
+  <form method="POST" action="/admin/comment/approve/<%= post.id %>/<%= comment.id %>">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <button type="submit" class="btn btn-sm" style="background:#dbeafe;color:#1e40af;border:1px solid #93c5fd">✔ Approve</button>
+  </form>
+  <% } %>
+
 </div>
 <form method="POST" action="/admin/comment/delete/<%= post.id %>/<%= comment.id %>" onsubmit="return confirm('Delete this comment?')">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">

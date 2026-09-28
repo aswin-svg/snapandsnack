@@ -109,10 +109,13 @@
     <div class="comments-section">
       <h2 class="comments-title">
         💬 Comments
-        <span class="comments-count"><%= post.comments ? post.comments.length : 0 %></span>
+        <span class="comments-count"><%= post.comments ? post.comments.filter(c => c.approved !== false).length : 0 %></span>
       </h2>
 
       <!-- Comment form -->
+       <% if (typeof pending !== 'undefined' && pending) { %>
+  <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem">✅ Thanks! Your comment is awaiting approval and will appear once reviewed.</div>
+<% } %>
       <form class="comment-form" method="POST" action="/post/<%= post.slug %>/comment">
         <div class="comment-form-row">
           <div class="form-group">
@@ -132,9 +135,10 @@
       </form>
 
       <!-- Comments list -->
-      <% if (post.comments && post.comments.length > 0) { %>
+      <% const visibleComments = (post.comments || []).filter(c => c.approved !== false); %>
+<% if (visibleComments.length > 0) { %>
         <div class="comments-list">
-          <% post.comments.slice().reverse().forEach(c => { %>
+          <% visibleComments.slice().reverse().forEach(c => { %>
             <div class="comment-card">
             <div class="comment-header">
               <div class="comment-avatar"><%= c.name.charAt(0).toUpperCase() %></div>

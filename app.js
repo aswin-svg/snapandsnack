@@ -372,7 +372,7 @@ app.get('/post/:slug', async (req, res) => {
     }
     const words = post.content.split(/\s+/).length;
     const readTime = Math.max(1, Math.round(words / 200));
-    res.render('post', { post, related, readTime, renderContent });
+    res.render('post', { post, related, readTime, renderContent, pending: req.query.pending === '1' });
   } catch (err) { res.status(500).render('404'); }
 });
 
@@ -385,36 +385,38 @@ app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
       const post = await Post.findOne({ slug: req.params.slug });
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()), approved: false });
       await post.save();
       sendNotification(
         `💬 New comment on "${post.title}"`,
         `<h2>New comment!</h2>
-        <p><strong>Post:</strong> ${post.title}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email || 'Not provided'}</p>
-        <p><strong>Comment:</strong> ${comment}</p>
-        <a href="https://snapandsnacks.com/post/${post.slug}">View post →</a>`
+        <p><strong>Post:</strong> ${escapeHtml(post.title)}</p>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email || 'Not provided')}</p>
+        <p><strong>Comment:</strong> ${escapeHtml(comment)}</p>
+        <p>⏳ Awaiting your approval.</p>
+<a href="https://snapandsnacks.com/admin">Review in dashboard →</a>`
       );
     } else {
       const db = readDB();
       const post = db.posts.find(p => p.slug === req.params.slug);
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
-      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()) });
+      post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()), approved: false });
       writeDB(db);
 
       sendNotification(
   `💬 New comment on "${post.title}"`,
   `<h2>New comment!</h2>
-  <p><strong>Post:</strong> ${post.title}</p>
-  <p><strong>Name:</strong> ${name}</p>
-  <p><strong>Email:</strong> ${email || 'Not provided'}</p>
-  <p><strong>Comment:</strong> ${comment}</p>
-  <a href="https://snapandsnacks.com/post/${post.slug}">View post →</a>`
+  <p><strong>Post:</strong> ${escapeHtml(post.title)}</p>
+  <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+  <p><strong>Email:</strong> ${escapeHtml(email || 'Not provided')}</p>
+  <p><strong>Comment:</strong> ${escapeHtml(comment)}</p>
+  <p>⏳ Awaiting your approval.</p>
+<a href="https://snapandsnacks.com/admin">Review in dashboard →</a>`
 );
     }
-    res.redirect('/post/' + req.params.slug + '#comments');
+    res.redirect('/post/' + req.params.slug + '?pending=1#comments');
   } catch (err) { res.redirect('/'); }
 });
 
@@ -483,7 +485,7 @@ app.post('/newsletter', newsletterLimiter, async (req, res) => {
         sendNotification(
           `📧 New newsletter subscriber!`,
           `<h2>New subscriber!</h2>
-          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
           <a href="https://snapandsnacks.com/admin/newsletter">View subscribers →</a>`
         );
       }
@@ -524,11 +526,11 @@ app.post('/contact', contactLimiter, async (req, res) => {
     if (USE_MONGO) {
       await Message.create({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
       sendNotification(
-        `📩 New contact message from ${name}`,
+        `📩 New contact message from ${escapeHtml(name)}`,
         `<h2>New message!</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Message:</strong> ${message}</p>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Message:</strong> ${escapeHtml(message)}</p>
         <a href="https://snapandsnacks.com/admin/messages">View in admin →</a>`
       );
     } else {
@@ -711,7 +713,6 @@ app.post('/admin/unpin/:id', requireLogin, async (req, res) => {
     const db = readDB();
     const post = db.posts.find(p => p.id === Number(req.params.id));
     if (post) { post.pinned = false; writeDB(db); }
-    writeDB(db);
   }
   res.redirect('/admin');
 });
@@ -761,6 +762,27 @@ app.post('/admin/comment/delete/:postId/:commentId', requireLogin, async (req, r
     const post = db.posts.find(p => p.id === Number(req.params.postId));
     if (post && post.comments) {
       post.comments = post.comments.filter(c => c.id !== Number(req.params.commentId));
+      writeDB(db);
+    }
+  }
+  res.redirect('/admin');
+});
+
+app.post('/admin/comment/approve/:postId/:commentId', requireLogin, async (req, res) => {
+  if (USE_MONGO) {
+    const post = await Post.findOne({ id: Number(req.params.postId) });
+    if (post) {
+      const comment = post.comments.find(c => c.id === Number(req.params.commentId));
+      if (comment) comment.approved = true;
+      post.markModified('comments');
+      await post.save();
+    }
+  } else {
+    const db = readDB();
+    const post = db.posts.find(p => p.id === Number(req.params.postId));
+    if (post && post.comments) {
+      const comment = post.comments.find(c => c.id === Number(req.params.commentId));
+      if (comment) comment.approved = true;
       writeDB(db);
     }
   }
