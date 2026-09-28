@@ -382,20 +382,29 @@ if (localStorage.getItem('darkMode') === 'true') {
 // Newsletter popup
 async function handleNewsletter(e) {
   e.preventDefault();
+  const form = document.getElementById('newsletter-form');
+  const btn = form.querySelector('button[type="submit"]');
+  const btnText = btn.textContent;
   const email = document.getElementById('newsletter-email').value;
   const csrf = document.querySelector('meta[name="csrf-token"]');
+  btn.disabled = true;
+  btn.textContent = 'Subscribing…';
   try {
     const body = 'email=' + encodeURIComponent(email) + (csrf ? '&_csrf=' + encodeURIComponent(csrf.content) : '');
-    await fetch('/newsletter', {
+    const res = await fetch('/newsletter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body
     });
+    if (!res.ok) throw new Error('Request failed');
     document.getElementById('newsletter-popup').classList.add('open');
     document.body.style.overflow = 'hidden';
     document.getElementById('newsletter-email').value = '';
-  } catch(err) {
+  } catch (err) {
     alert('Something went wrong. Please try again!');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = btnText;
   }
 }
 function closeNewsletterPopup() {

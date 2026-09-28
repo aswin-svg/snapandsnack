@@ -78,7 +78,7 @@
       </div>
     <% } else { %>
       <div class="contact-card">
-        <form method="POST" action="/contact">
+        <form method="POST" action="/contact" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Sending…';">
           <div class="form-group">
             <label>Your name *</label>
             <input type="text" name="name" placeholder="Your name" required>
