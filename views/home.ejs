@@ -80,8 +80,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   <!-- ░░ HERO ░░ -->
       <section class="hero">
-        <img src="/gallery-uploads/public/uploads/1780833549778.jpg" alt="" class="hero-bg-img">
-    <div class="hero-bg-overlay"></div>
+    <% if (posts[0] && posts[0].image) { %>
+      <img src="<%= posts[0].image %>" alt="" class="hero-bg-img">
+      <div class="hero-bg-overlay"></div>
+    <% } %>
     <div class="container">
       <p class="hero-eyebrow">📷 Travel · Food · Lifestyle</p>
       <h1>Better Snack,<br><em>Better Snap.</em></h1>
