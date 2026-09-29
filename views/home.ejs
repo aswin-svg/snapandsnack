@@ -79,7 +79,11 @@ document.addEventListener('DOMContentLoaded', function() {
   </nav>
 
   <!-- ░░ HERO ░░ -->
-   <section class="hero">
+      <section class="hero">
+    <% if (posts[0] && posts[0].image) { %>
+      <img src="<%= posts[0].image %>" alt="" class="hero-bg-img">
+      <div class="hero-bg-overlay"></div>
+    <% } %>
     <div class="container">
       <p class="hero-eyebrow">📷 Travel · Food · Lifestyle</p>
       <h1>Better Snack,<br><em>Better Snap.</em></h1>
@@ -239,7 +243,8 @@ document.addEventListener('DOMContentLoaded', function() {
   <% } %>
 
   <!-- ░░ WHAT YOU'LL FIND ░░ -->
-<% const topPosts = [...posts].sort((a,b) => (b.views||0) - (a.views||0)).slice(0,3); %>
+<% const shownIds = new Set(posts.slice(0,7).map(p => p.id)); %>
+<% const topPosts = [...posts].filter(p => !shownIds.has(p.id)).sort((a,b) => (b.views||0) - (a.views||0)).slice(0,3); %>
 <% if (topPosts.length > 0) { %>
 <section class="most-viewed-section">
   <div class="container">
