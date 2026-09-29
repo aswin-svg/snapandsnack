@@ -801,6 +801,9 @@ html.dark input, html.dark textarea, html.dark select { background: #1a1814; bor
 html.dark .no-comments { background: #141210; border-color: var(--border); }
 html.dark .photo-item { background: var(--warm-white); border-color: var(--border); }
 html.dark .nav-logo { color: var(--ink); }
+html.dark .cat-travel { background: rgba(45, 106, 143, 0.2); color: #7ec1e8; }
+html.dark .cat-food { background: rgba(201, 98, 47, 0.2); color: #f0935e; }
+html.dark .cat-lifestyle { background: rgba(122, 92, 138, 0.2); color: #c79ee0; } 
 
 /* ─── Dark mode toggle button ───────────────────────────────────── */
 .dark-mode-toggle {

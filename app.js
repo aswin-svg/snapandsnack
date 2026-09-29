@@ -305,12 +305,13 @@ function renderContent(text) {
 
 app.get('/', async (req, res) => {
   try {
-    let posts, latestPhotos, categories;
+    let posts, latestPhotos, categories, photoCount;
     if (USE_MONGO) {
       posts = await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 });
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
       latestPhotos = await Gallery.find().sort({ id: -1 }).limit(6);
+      photoCount = await Gallery.countDocuments();
       categories = [...new Set(posts.map(p => p.category))];
     } else {
       const db = readDB();
@@ -318,9 +319,10 @@ app.get('/', async (req, res) => {
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
       latestPhotos = [...db.gallery].reverse().slice(0, 6);
+      photoCount = db.gallery.length;
       categories = [...new Set(posts.map(p => p.category))];
     }
-    res.render('home', { posts, latestPhotos, categories });
+    res.render('home', { posts, latestPhotos, categories, photoCount });
   } catch (err) { res.status(500).render('404'); }
 });
 
