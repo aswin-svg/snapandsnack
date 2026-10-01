@@ -79,12 +79,14 @@ if (USE_MONGO) {
     .then(() => console.log('  ✅  MongoDB connected!'))
     .catch(err => console.error('  ❌  MongoDB error:', err.message));
 
-  const PostSchema = new mongoose.Schema({
+    const PostSchema = new mongoose.Schema({
     id: Number, title: String, content: String,
     category: String, tags: [String], image: String,
     date: String, slug: String, status: String,
-    pinned: Boolean, views: Number, comments: Array
+    pinned: Boolean, views: Number, comments: Array,
+    metaTitle: String, metaDescription: String
   });
+
   const GallerySchema = new mongoose.Schema({
     id: Number, src: String, caption: String, date: String
   });
@@ -607,8 +609,10 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
   const action = req.body.action;
   const title = cleanText(req.body.title, 160);
   let content = cleanText(req.body.content, 100000);
-  const category = cleanText(req.body.category, 50);
+    const category = cleanText(req.body.category, 50);
   const tags = cleanText(req.body.tags, 500);
+  const metaTitle = cleanText(req.body.metaTitle, 70);
+  const metaDescription = cleanText(req.body.metaDescription, 160);
   if (!title || !content) return res.render('admin/form', { post: null, error: 'Title and content are required.' });
   try {
     const files = req.files || [];
@@ -622,7 +626,8 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       image: featuredFile ? '/uploads/' + featuredFile.filename : null,
       date: formatDate(new Date()), slug: slugify(title),
-      status: action === 'draft' ? 'draft' : 'published', comments: []
+      status: action === 'draft' ? 'draft' : 'published', comments: [],
+      metaTitle, metaDescription
     };
     if (USE_MONGO) {
       await Post.create(postData);
@@ -651,6 +656,8 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
   let content = cleanText(req.body.content, 100000);
   const category = cleanText(req.body.category, 50);
   const tags = cleanText(req.body.tags, 500);
+  const metaTitle = cleanText(req.body.metaTitle, 70);
+  const metaDescription = cleanText(req.body.metaDescription, 160);
   try {
     const files = req.files || [];
     await Promise.all(files.map(convertToJpg));
@@ -664,7 +671,10 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       post.content  = content;
       post.category = category || 'Travel';
       post.tags     = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+            
       post.status   = action === 'draft' ? 'draft' : 'published';
+      post.metaTitle = metaTitle;
+      post.metaDescription = metaDescription;
       if (featuredFile) post.image = '/uploads/' + featuredFile.filename;
       await post.save();
     } else {
@@ -676,6 +686,8 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       post.category = category || 'Travel';
       post.tags     = tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       post.status   = action === 'draft' ? 'draft' : 'published';
+      post.metaTitle = metaTitle;
+      post.metaDescription = metaDescription;
       if (featuredFile) post.image = '/uploads/' + featuredFile.filename;
       writeDB(db);
     }

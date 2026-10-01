@@ -6,10 +6,10 @@
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= post.title %> — Snap & Snack</title>
-  <meta name="description" content="<%= post.content.substring(0,150).replace(/\n/g,' ') %>">
+  <meta name="description" content="<%= post.metaDescription ? post.metaDescription : post.content.substring(0,150).replace(/\n/g,' ') %>">
   <meta property="og:type" content="article">
-  <meta property="og:title" content="<%= post.title %>">
-  <meta property="og:description" content="<%= post.content.substring(0,150).replace(/\n/g,' ') %>">
+  <meta property="og:title" content="<%= post.metaTitle ? post.metaTitle : post.title %>">
+  <meta property="og:description" content="<%= post.metaDescription ? post.metaDescription : post.content.substring(0,150).replace(/\n/g,' ') %>">
   <meta property="og:image" content="<%= post.image ? 'https:// snapandsnacks.com' + post.image : 'https:// snapandsnacks.com/favicon.svg' %>">
   <meta property="og:url" content="https://snapandsnacks.com/post/<%= post.slug %>">
   <meta name="twitter:card" content="summary_large_image">
@@ -119,17 +119,17 @@
       <form class="comment-form" method="POST" action="/post/<%= post.slug %>/comment" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Posting…';">
         <div class="comment-form-row">
           <div class="form-group">
-            <label>Your name *</label>
-            <input type="text" name="name" placeholder="e.g. Sarah" required>
+            <label for="comment-name">Your name *</label>
+            <input type="text" id="comment-name" name="name" placeholder="e.g. Sarah" required>
           </div>
           <div class="form-group">
-            <label>Email <span style="color:var(--muted);font-weight:300">(not shown publicly)</span></label>
-            <input type="email" name="email" placeholder="your@email.com">
+            <label for="comment-email">Email <span style="color:var(--muted);font-weight:300">(not shown publicly)</span></label>
+            <input type="email" id="comment-email" name="email" placeholder="your@email.com">
           </div>
         </div>
         <div class="form-group">
-          <label>Comment *</label>
-          <textarea name="comment" rows="4" placeholder="Share your thoughts..." required></textarea>
+          <label for="comment-text">Comment *</label>
+          <textarea id="comment-text" name="comment" rows="4" placeholder="Share your thoughts..." required></textarea>
         </div>
         <button type="submit" class="btn btn-accent">Post comment →</button>
       </form>
