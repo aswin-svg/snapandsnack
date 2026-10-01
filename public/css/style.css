@@ -649,7 +649,8 @@ html.dark .post-body { color: #d4c9bc; }
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .what-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(28,24,20,0.07); }
-.what-icon { font-size: 2rem; margin-bottom: 0.85rem; }
+.what-icon { margin-bottom: 0.85rem; color: var(--accent); }
+.what-icon svg { width: 2rem; height: 2rem; }
 .what-card h3 { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
 .what-card p { font-size: 0.875rem; color: var(--muted); line-height: 1.7; font-weight: 300; }
 
