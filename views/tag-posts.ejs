@@ -21,29 +21,7 @@
 </head>
 <body>
 
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/blog">Blog</a>
-        <a href="/gallery">Gallery</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
-          <div class="toggle-thumb" id="toggle-thumb">☀️</div>
-        </div>
-      </div>
-      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
-    </div>
-    <div class="nav-mobile" id="nav-mobile">
-      <a href="/">Home</a>
-      <a href="/blog">Blog</a>
-      <a href="/gallery">Gallery</a>
-      <a href="/about">About</a>
-      <a href="/contact">Contact</a>
-    </div>
-  </nav>
+  <%- include('partials/nav') %>
 
   <div class="container">
     <a href="/tags" class="back-link">← All tags</a>
@@ -83,60 +61,16 @@
     <% } %>
   </div>
 
-  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
-
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks · <a href="/privacy" style="color:#a09890">Privacy Policy</a> · <a href="/terms" style="color:#a09890">Terms & Conditions</a></div>
-    </div>
-  </footer>
+  <%- include('partials/footer') %>
 
   <script>
-    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
-    window.addEventListener('scroll', () => {
-      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
-    });
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    function toggleDark() {
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('darkMode', isDark);
-  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.toggle('on', isDark));
-  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = isDark ? '🌙' : '☀️');
-}
-if (localStorage.getItem('darkMode') === 'true') {
-  document.documentElement.classList.add('dark');
-  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.add('on'));
-  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = '🌙');
-}
+    <%- include('partials/dark-toggle-script') %>
 
-// Cookie consent
-function acceptCookies() {
-  localStorage.setItem('cookieConsent', 'accepted');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-function declineCookies() {
-  localStorage.setItem('cookieConsent', 'declined');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-// Show banner if no choice made yet
-if (!localStorage.getItem('cookieConsent')) {
-  setTimeout(() => {
-    document.getElementById('cookie-banner').classList.add('show');
-  }, 1500);
-}
+<%- include('partials/cookie-script') %>
 
   </script>
 
-<!-- Cookie consent banner -->
-<div class="cookie-banner" id="cookie-banner">
-  <div class="cookie-content">
-    <p>🍪 We use cookies to improve your experience and analyze traffic. See our <a href="/privacy">Privacy Policy</a>.</p>
-    <div class="cookie-buttons">
-      <button class="btn btn-outline btn-sm" onclick="declineCookies()">Decline</button>
-      <button class="btn btn-accent btn-sm" onclick="acceptCookies()">Accept</button>
-    </div>
-  </div>
-</div>
+<%- include('partials/cookie-banner') %>
 
 
 </body>

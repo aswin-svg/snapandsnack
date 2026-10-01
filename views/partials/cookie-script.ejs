@@ -1,0 +1,15 @@
+// Cookie consent
+function acceptCookies() {
+  localStorage.setItem('cookieConsent', 'accepted');
+  document.getElementById('cookie-banner').classList.remove('show');
+}
+function declineCookies() {
+  localStorage.setItem('cookieConsent', 'declined');
+  document.getElementById('cookie-banner').classList.remove('show');
+}
+// Show banner if no choice made yet
+if (!localStorage.getItem('cookieConsent')) {
+  setTimeout(() => {
+    document.getElementById('cookie-banner').classList.add('show');
+  }, 1500);
+}

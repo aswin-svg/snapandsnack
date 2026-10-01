@@ -35,35 +35,7 @@
 </head>
 <body>
 
-  <nav class="nav">
-    <div class="container nav-inner">
-      <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
-      <div class="nav-links">
-        <a href="/">Home</a>
-        <a href="/blog">Blog</a>
-        <a href="/gallery" class="active">Gallery</a>
-        <a href="/about">About</a>
-        <a href="/contact">Contact</a>
-        <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
-  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
-</div>
-</div>
-        
-      </div>
-      <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
-    </div>
-    <div class="nav-mobile" id="nav-mobile">
-      <a href="/">Home</a>
-      <a href="/blog">Blog</a>
-      <a href="/gallery">Gallery</a>
-      <a href="/about">About</a>
-      <a href="/contact">Contact</a>
-      <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
-  <div class="toggle-thumb" id="toggle-thumb">☀️</div>
-</div>
-</div>
-    </div>
-  </nav>
+  <%- include('partials/nav', { active: 'gallery' }) %>
 
   <div class="container">
     <div class="gallery-header">
@@ -140,113 +112,17 @@
   </div>
 
   <!-- Back to top -->
-  <button class="back-to-top" id="back-to-top" onclick="scrollToTop()" title="Back to top">↑</button>
-
-  <!-- Dark mode toggle -->
-  
-
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-bottom">© <%= new Date().getFullYear() %> Snap & Snacks · <a href="/privacy" style="color:#a09890">Privacy Policy</a> · <a href="/terms" style="color:#a09890">Terms & Conditions</a></div>
-    </div>
-  </footer>
+  <%- include('partials/footer') %>
 
   <script>
-    function toggleMenu() { document.getElementById('nav-mobile').classList.toggle('open'); }
+    <%- include('partials/dark-toggle-script') %>
 
-    // Lightbox
-    function openLightbox(src, caption) {
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox-caption').textContent = caption;
-      document.getElementById('lightbox').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox(e) {
-      if (!e || e.target === document.getElementById('lightbox') || e.target.classList.contains('lightbox-close')) {
-        document.getElementById('lightbox').classList.remove('open');
-        document.body.style.overflow = '';
-      }
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
-
-    // Filter
-    function filterGallery(keyword, btn) {
-      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      document.getElementById('gallery-search').value = '';
-      const items = document.querySelectorAll('.project');
-      let visible = 0;
-      items.forEach(item => {
-        const show = keyword === 'all' || item.dataset.caption.includes(keyword.toLowerCase());
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-      document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
-      document.getElementById('photo-count').textContent = visible;
-    }
-
-    // Search
-    function searchGallery(val) {
-      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
-      const items = document.querySelectorAll('.project');
-      let visible = 0;
-      items.forEach(item => {
-        const show = !val || item.dataset.caption.includes(val.toLowerCase());
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-      document.getElementById('no-results').style.display = visible === 0 && val ? 'block' : 'none';
-      document.getElementById('photo-count').textContent = visible;
-    }
-
-    // Back to top
-    window.addEventListener('scroll', () => {
-      document.getElementById('back-to-top').classList.toggle('visible', window.scrollY > 300);
-    });
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-
-    // Dark mode
-    function toggleDark() {
-  const isDark = document.documentElement.classList.toggle('dark');
-  localStorage.setItem('darkMode', isDark);
-  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.toggle('on', isDark));
-  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = isDark ? '🌙' : '☀️');
-}
-if (localStorage.getItem('darkMode') === 'true') {
-  document.documentElement.classList.add('dark');
-  document.querySelectorAll('.dark-toggle').forEach(el => el.classList.add('on'));
-  document.querySelectorAll('.toggle-thumb').forEach(el => el.textContent = '🌙');
-}
-
-// Cookie consent
-function acceptCookies() {
-  localStorage.setItem('cookieConsent', 'accepted');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-function declineCookies() {
-  localStorage.setItem('cookieConsent', 'declined');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-// Show banner if no choice made yet
-if (!localStorage.getItem('cookieConsent')) {
-  setTimeout(() => {
-    document.getElementById('cookie-banner').classList.add('show');
-  }, 1500);
-}
+<%- include('partials/cookie-script') %>
 
   </script>
 
 
-<!-- Cookie consent banner -->
-<div class="cookie-banner" id="cookie-banner">
-  <div class="cookie-content">
-    <p>🍪 We use cookies to improve your experience and analyze traffic. See our <a href="/privacy">Privacy Policy</a>.</p>
-    <div class="cookie-buttons">
-      <button class="btn btn-outline btn-sm" onclick="declineCookies()">Decline</button>
-      <button class="btn btn-accent btn-sm" onclick="acceptCookies()">Accept</button>
-    </div>
-  </div>
-</div>
+<%- include('partials/cookie-banner') %>
 
 </body>
 </html>

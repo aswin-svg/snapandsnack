@@ -1,0 +1,26 @@
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
+    <div class="nav-links">
+      <a href="/"<% if (typeof active !== 'undefined' && active === 'home') { %> class="active"<% } %>>Home</a>
+      <a href="/blog"<% if (typeof active !== 'undefined' && active === 'blog') { %> class="active"<% } %>>Blog</a>
+      <a href="/gallery"<% if (typeof active !== 'undefined' && active === 'gallery') { %> class="active"<% } %>>Gallery</a>
+      <a href="/about"<% if (typeof active !== 'undefined' && active === 'about') { %> class="active"<% } %>>About</a>
+      <a href="/contact"<% if (typeof active !== 'undefined' && active === 'contact') { %> class="active"<% } %>>Contact</a>
+      <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
+        <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+      </div>
+    </div>
+    <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="nav-mobile" id="nav-mobile">
+    <a href="/">Home</a>
+    <a href="/blog">Blog</a>
+    <a href="/gallery">Gallery</a>
+    <a href="/about">About</a>
+    <a href="/contact">Contact</a>
+    <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
+      <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+    </div>
+  </div>
+</nav>
