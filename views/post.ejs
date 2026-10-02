@@ -90,7 +90,8 @@
        <% if (typeof pending !== 'undefined' && pending) { %>
   <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#065f46;padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem">✅ Thanks! Your comment is awaiting approval and will appear once reviewed.</div>
 <% } %>
-      <form class="comment-form" method="POST" action="/post/<%= post.slug %>/comment" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Posting…';">
+        <form class="comment-form" method="POST" action="/post/<%= post.slug %>/comment" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Posting…';">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="comment-form-row">
           <div class="form-group">
             <label for="comment-name">Your name *</label>

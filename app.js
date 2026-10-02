@@ -200,6 +200,10 @@ function csrfProtection(req, res, next) {
   return res.status(403).send('Invalid or missing form token. Please refresh the page and try again.');
 }
 app.use('/admin', csrfProtection);
+app.use((req, res, next) => {
+  if (!res.locals.csrfToken) res.locals.csrfToken = csrfToken(req);
+  next();
+});
 
 // ─── Uploads ──────────────────────────────────────────────────────
 const postStorage = multer.diskStorage({
@@ -380,7 +384,7 @@ app.get('/post/:slug', async (req, res) => {
   } catch (err) { res.status(500).render('404'); }
 });
 
-app.post('/post/:slug/comment', commentLimiter, async (req, res) => {
+app.post('/post/:slug/comment', commentLimiter, csrfProtection, async (req, res) => {
   const { name, email, comment } = req.body;
   if (!name || !comment) return res.redirect('/post/' + req.params.slug);
   if (name.length > 100 || comment.length > 2000) return res.redirect('/post/' + req.params.slug);
@@ -473,7 +477,7 @@ app.get('/archive', async (req, res) => {
   res.render('archive', { archive });
 });
 
-app.post('/newsletter', newsletterLimiter, async (req, res) => {
+app.post('/newsletter', newsletterLimiter, csrfProtection, async (req, res) => {
   const { email } = req.body;
   if (!email || !email.includes('@')) return res.redirect(req.get('Referrer') || '/');
   if (email.length > 200) return res.redirect(req.get('Referrer') || '/');
@@ -522,7 +526,7 @@ app.get('/terms',   (req, res) => res.render('terms'));
 app.get('/about',   (req, res) => res.render('about'));
 app.get('/contact', (req, res) => res.render('contact', { success: false }));
 
-app.post('/contact', contactLimiter, async (req, res) => {
+app.post('/contact', contactLimiter, csrfProtection, async (req, res) => {
   const { name, email, message } = req.body;
   if (!name || !email || !message) return res.render('contact', { success: false });
   if (name.length > 100 || message.length > 5000) return res.render('contact', { success: false });

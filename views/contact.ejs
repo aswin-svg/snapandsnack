@@ -51,7 +51,8 @@
       </div>
     <% } else { %>
       <div class="contact-card">
-        <form method="POST" action="/contact" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Sending…';">
+          <form method="POST" action="/contact" onsubmit="var b=this.querySelector('button[type=submit]');b.disabled=true;b.textContent='Sending…';">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <div class="form-group">
             <label for="contact-name">Your name *</label>
             <input type="text" id="contact-name" name="name" placeholder="Your name" required>
