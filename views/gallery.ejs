@@ -15,23 +15,6 @@
   <link rel="stylesheet" href="/css/gallery.css">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <!-- Google Analytics -->
-
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-N9JTYL4795"></script>
-
-  <script>
-
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag(){dataLayer.push(arguments);}
-
-    gtag('js', new Date());
-
-    gtag('config', 'G-N9JTYL4795');
-
-  </script>
-
-
 </head>
 <body>
 
@@ -43,7 +26,6 @@
       <p>Moments captured from the road 📷 — <span id="photo-count"><%= photos.length %></span> photos</p>
     </div>
 
-    <!-- Filter bar -->
     <% if (photos.length > 0) { %>
     <div class="gallery-filter-bar">
       <button class="gallery-filter-btn active" onclick="filterGallery('all', this)">All</button>
@@ -71,7 +53,6 @@
     </div>
   <% } else { %>
 
-  <!-- Photo Grid -->
   <div class="portfolio" id="photo-grid">
     <% photos.forEach((photo, i) => { %>
       <div class="project" 
@@ -102,7 +83,6 @@
 
   <% } %>
 
-  <!-- Lightbox -->
   <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
     <div class="lightbox-inner">
       <button class="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -111,11 +91,9 @@
     </div>
   </div>
 
-  <!-- Back to top -->
   <%- include('partials/footer') %>
 
-  <scrip>
-      
+  <script>
     // Lightbox
     function openLightbox(src, caption) {
       document.getElementById('lightbox-img').src = src;
@@ -163,10 +141,7 @@
 
     <%- include('partials/dark-toggle-script') %>
     <%- include('partials/cookie-script') %>
-  </scrip>
-
-
-
+  </script>
 
 <%- include('partials/cookie-banner') %>
 
