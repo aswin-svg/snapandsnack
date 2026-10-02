@@ -63,6 +63,16 @@ const fs = require('fs');
 let sharp;
 try { sharp = require('sharp'); } catch (e) { sharp = null; }
 
+const cloudinary = require('cloudinary').v2;
+const USE_CLOUDINARY = !!process.env.CLOUDINARY_CLOUD_NAME;
+if (USE_CLOUDINARY) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+}
+
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
@@ -817,21 +827,35 @@ app.get('/admin/gallery', requireLogin, async (req, res) => {
 app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20), verifyImageUploads, async (req, res) => {
   const captions = req.body.captions;
   await Promise.all(req.files.map(convertToJpg));
+
+  const uploaded = [];
+  for (const file of req.files) {
+    let src;
+    if (USE_CLOUDINARY) {
+      const result = await cloudinary.uploader.upload(file.path, { folder: 'snapandsnacks-gallery' });
+      src = result.secure_url;
+      fs.unlinkSync(file.path);
+    } else {
+      src = '/gallery-uploads/' + file.filename;
+    }
+    uploaded.push(src);
+  }
+
   if (USE_MONGO) {
-    for (let i = 0; i < req.files.length; i++) {
+    for (let i = 0; i < uploaded.length; i++) {
       await Gallery.create({
         id: Date.now() + i,
-        src: '/gallery-uploads/' + req.files[i].filename,
+        src: uploaded[i],
         caption: Array.isArray(captions) ? (captions[i] || '') : (captions || ''),
         date: formatDate(new Date())
       });
     }
   } else {
     const db = readDB();
-    req.files.forEach((file, i) => {
+    uploaded.forEach((src, i) => {
       db.gallery.push({
         id: Date.now() + i,
-        src: '/gallery-uploads/' + file.filename,
+        src: src,
         caption: Array.isArray(captions) ? (captions[i] || '') : (captions || ''),
         date: formatDate(new Date())
       });
