@@ -115,9 +115,55 @@
   <%- include('partials/footer') %>
 
   <script>
-    <%- include('partials/dark-toggle-script') %>
+      <script>
+    // Lightbox
+    function openLightbox(src, caption) {
+      document.getElementById('lightbox-img').src = src;
+      document.getElementById('lightbox-caption').textContent = caption;
+      document.getElementById('lightbox').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox(e) {
+      if (!e || e.target === document.getElementById('lightbox') || e.target.classList.contains('lightbox-close')) {
+        document.getElementById('lightbox').classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
 
-<%- include('partials/cookie-script') %>
+    // Filter
+    function filterGallery(keyword, btn) {
+      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      document.getElementById('gallery-search').value = '';
+      const items = document.querySelectorAll('.project');
+      let visible = 0;
+      items.forEach(item => {
+        const show = keyword === 'all' || item.dataset.caption.includes(keyword.toLowerCase());
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+      document.getElementById('photo-count').textContent = visible;
+    }
+
+    // Search
+    function searchGallery(val) {
+      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
+      const items = document.querySelectorAll('.project');
+      let visible = 0;
+      items.forEach(item => {
+        const show = !val || item.dataset.caption.includes(val.toLowerCase());
+        item.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('no-results').style.display = visible === 0 && val ? 'block' : 'none';
+      document.getElementById('photo-count').textContent = visible;
+    }
+
+    <%- include('partials/dark-toggle-script') %>
+    <%- include('partials/cookie-script') %>
+  </script>
 
   </script>
 
