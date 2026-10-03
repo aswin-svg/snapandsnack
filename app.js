@@ -147,6 +147,13 @@ function writeDB(data) {
 }
 
 // ─── Image conversion ─────────────────────────────────────────────
+async function uploadToCloudinary(file, folder) {
+  if (!USE_CLOUDINARY) return '/uploads/' + file.filename;
+  const result = await cloudinary.uploader.upload(file.path, { folder });
+  fs.unlinkSync(file.path);
+  return result.secure_url;
+}
+
 async function convertToJpg(file) {
   if (!sharp) return; // skip if sharp not available
   try {
@@ -288,7 +295,7 @@ function processInlineImages(content, files) {
   files.forEach(file => {
     const tag1 = '[image:' + file.fieldname + ']';
     const tag2 = '[image: ' + file.fieldname + ']';
-    const imgPath = '/uploads/' + file.filename;
+    const imgPath = file.uploadedSrc;
     result = result.split(tag1).join('[image:' + imgPath + ']');
     result = result.split(tag2).join('[image:' + imgPath + ']');
   });
@@ -629,8 +636,11 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
   const metaDescription = cleanText(req.body.metaDescription, 160);
   if (!title || !content) return res.render('admin/form', { post: null, error: 'Title and content are required.' });
   try {
-    const files = req.files || [];
+        const files = req.files || [];
     await Promise.all(files.map(convertToJpg));
+    for (const file of files) {
+      file.uploadedSrc = await uploadToCloudinary(file, 'snapandsnacks-posts');
+    }
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -638,7 +648,7 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
       id: Date.now(), title, content,
       category: category || 'Travel',
       tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-      image: featuredFile ? '/uploads/' + featuredFile.filename : null,
+      image: featuredFile ? featuredFile.uploadedSrc : null,
       date: formatDate(new Date()), slug: slugify(title),
       status: action === 'draft' ? 'draft' : 'published', comments: [],
       metaTitle, metaDescription
@@ -673,8 +683,11 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
   const metaTitle = cleanText(req.body.metaTitle, 70);
   const metaDescription = cleanText(req.body.metaDescription, 160);
   try {
-    const files = req.files || [];
+        const files = req.files || [];
     await Promise.all(files.map(convertToJpg));
+    for (const file of files) {
+      file.uploadedSrc = await uploadToCloudinary(file, 'snapandsnacks-posts');
+    }
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -689,7 +702,7 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       post.status   = action === 'draft' ? 'draft' : 'published';
       post.metaTitle = metaTitle;
       post.metaDescription = metaDescription;
-      if (featuredFile) post.image = '/uploads/' + featuredFile.filename;
+      if (featuredFile) post.image = featuredFile.uploadedSrc;
       await post.save();
     } else {
       const db = readDB();
@@ -702,7 +715,7 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       post.status   = action === 'draft' ? 'draft' : 'published';
       post.metaTitle = metaTitle;
       post.metaDescription = metaDescription;
-      if (featuredFile) post.image = '/uploads/' + featuredFile.filename;
+      if (featuredFile) post.image = featuredFile.uploadedSrc;
       writeDB(db);
     }
     res.redirect('/admin');
