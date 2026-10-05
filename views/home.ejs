@@ -253,26 +253,26 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="container">
       <h2 class="section-title" style="text-align:center;margin-bottom:2rem">What you'll find here</h2>
       <div class="what-grid">
-          <div class="what-card">
-          <div class="what-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-3 2v1.5l4.5-1.5 4.5 1.5V21l-3-2v-5.5l8 2.5z"/></svg></div>
+        <div class="what-card">
+          <div class="what-icon">✈️</div>
           <h3>Travel Stories</h3>
           <p>Real experiences from real trips — the good, the chaotic, and the beautiful.</p>
           <a href="/blog?category=Travel" class="what-link">Explore →</a>
         </div>
-          <div class="what-card">
-          <div class="what-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18"/><path d="M4 10a8 8 0 0 0 16 0"/><path d="M5 14l1.2 5a2 2 0 0 0 2 1.5h7.6a2 2 0 0 0 2-1.5L19 14"/><path d="M8 3v3M12 2v4M16 3v3"/></svg></div>
+        <div class="what-card">
+          <div class="what-icon">🍜</div>
           <h3>Food Adventures</h3>
           <p>Street food, local restaurants, and every delicious thing I eat along the way.</p>
           <a href="/blog?category=Food" class="what-link">Explore →</a>
         </div>
-          <div class="what-card">
-          <div class="what-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
+        <div class="what-card">
+          <div class="what-icon">📷</div>
           <h3>Photography</h3>
           <p>Moments captured from around the world — one photo at a time.</p>
           <a href="/gallery" class="what-link">View gallery →</a>
         </div>
-          <div class="what-card">
-          <div class="what-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-1-7-5-7-10 0-3 1.5-6 4-7 0 4 1 7 3 9-1-5 0-9 3-11 2 1.5 3 5 3 8 0 5-2 9-6 11z"/></svg></div>
+        <div class="what-card">
+          <div class="what-icon">🌿</div>
           <h3>Lifestyle</h3>
           <p>Tips, thoughts, and honest stories about life on and off the road.</p>
           <a href="/blog?category=Lifestyle" class="what-link">Explore →</a>
@@ -282,7 +282,33 @@ document.addEventListener('DOMContentLoaded', function() {
   </section>
 
   <!-- Back to top & dark mode -->
-  <%- include('partials/footer') %>
+  <!-- ░░ NEWSLETTER ░░ -->
+<section class="newsletter-section">
+  <div class="container">
+    <div class="newsletter-box">
+      <div class="newsletter-text">
+        <h2>📬 Stay in the loop</h2>
+        <p>Get new travel stories and food adventures delivered to your inbox. No spam, ever!</p>
+      </div>
+      <form class="newsletter-form" id="newsletter-form" onsubmit="handleNewsletter(event)">
+        <input type="email" name="email" id="newsletter-email" placeholder="your@email.com" required>
+        <button type="submit" class="btn btn-accent">Subscribe →</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- Newsletter popup -->
+<div class="newsletter-popup" id="newsletter-popup">
+  <div class="newsletter-popup-box">
+    <div class="newsletter-popup-icon">🎉</div>
+    <h3>You're subscribed!</h3>
+    <p>Thanks for joining! You'll get the latest travel stories and food adventures from Snap & Snacks.</p>
+    <button class="btn btn-accent" onclick="closeNewsletterPopup()">Awesome! →</button>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
 
   <script>
     <%- include('partials/dark-toggle-script') %>
