@@ -379,13 +379,19 @@ app.get('/blog', async (req, res) => {
 
 app.get('/post/:slug', async (req, res) => {
   try {
-    let post, related;
+    let post, related, generalRelated, categoryCounts;
     if (USE_MONGO) {
       post = await Post.findOne({ slug: req.params.slug, status: { $ne: 'draft' } });
       if (!post) return res.status(404).render('404');
       post.views = (post.views || 0) + 1;
       await post.save();
       related = await Post.find({ slug: { $ne: post.slug }, category: post.category, status: { $ne: 'draft' } }).limit(3);
+      generalRelated = await Post.find({ slug: { $ne: post.slug }, status: { $ne: 'draft' } }).sort({ id: -1 }).limit(4);
+      categoryCounts = {
+        Travel: await Post.countDocuments({ category: 'Travel', status: { $ne: 'draft' } }),
+        Food: await Post.countDocuments({ category: 'Food', status: { $ne: 'draft' } }),
+        Lifestyle: await Post.countDocuments({ category: 'Lifestyle', status: { $ne: 'draft' } })
+      };
     } else {
       const db = readDB();
       post = db.posts.find(p => p.slug === req.params.slug && p.status !== 'draft');
@@ -394,10 +400,16 @@ app.get('/post/:slug', async (req, res) => {
       post.views = (post.views || 0) + 1;
       writeDB(db);
       related = db.posts.filter(p => p.slug !== post.slug && p.category === post.category && p.status !== 'draft').slice(0, 3);
+      generalRelated = db.posts.filter(p => p.slug !== post.slug && p.status !== 'draft').reverse().slice(0, 4);
+      categoryCounts = {
+        Travel: db.posts.filter(p => p.category === 'Travel' && p.status !== 'draft').length,
+        Food: db.posts.filter(p => p.category === 'Food' && p.status !== 'draft').length,
+        Lifestyle: db.posts.filter(p => p.category === 'Lifestyle' && p.status !== 'draft').length
+      };
     }
     const words = post.content.split(/\s+/).length;
     const readTime = Math.max(1, Math.round(words / 200));
-    res.render('post', { post, related, readTime, renderContent, pending: req.query.pending === '1' });
+    res.render('post', { post, related, generalRelated, categoryCounts, readTime, renderContent, pending: req.query.pending === '1' });
   } catch (err) { res.status(500).render('404'); }
 });
 
