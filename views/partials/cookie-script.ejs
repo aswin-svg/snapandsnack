@@ -1,15 +1,40 @@
-// Cookie consent
-function acceptCookies() {
-  localStorage.setItem('cookieConsent', 'accepted');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-function declineCookies() {
-  localStorage.setItem('cookieConsent', 'declined');
-  document.getElementById('cookie-banner').classList.remove('show');
-}
-// Show banner if no choice made yet
-if (!localStorage.getItem('cookieConsent')) {
-  setTimeout(() => {
-    document.getElementById('cookie-banner').classList.add('show');
-  }, 1500);
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const banner = document.getElementById('cookie-banner');
+  if (!banner) return;
+  const measurementId = 'G-N9JTYL4795';
+  const disableKey = 'ga-disable-' + measurementId;
+  let analyticsLoaded = false;
+
+  function enableAnalytics() {
+    window[disableKey] = false;
+    if (analyticsLoaded) return;
+    analyticsLoaded = true;
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { window.dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', measurementId);
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+    document.head.appendChild(script);
+  }
+
+  let preference;
+  try { preference = localStorage.getItem('cookieConsent'); } catch {}
+  if (preference === 'accepted') enableAnalytics();
+  else if (preference !== 'declined') banner.classList.add('show');
+
+  for (const button of banner.querySelectorAll('[data-cookie-choice]')) {
+    button.addEventListener('click', () => {
+      const choice = button.dataset.cookieChoice;
+      try { localStorage.setItem('cookieConsent', choice); } catch {}
+      if (choice === 'accepted') enableAnalytics();
+      else window[disableKey] = true;
+      banner.classList.remove('show');
+    });
+  }
+  document.getElementById('cookie-settings')?.addEventListener('click', () => {
+    banner.classList.add('show');
+    banner.querySelector('button').focus();
+  });
+});
