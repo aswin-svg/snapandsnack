@@ -6,11 +6,12 @@
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery — Snap & Snack</title>
+  <link rel="canonical" href="<%= siteUrl('/gallery') %>">
   <meta name="description" content="Photo gallery — moments captured from travels around the world by Aswin.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Gallery — Snap & Snacks">
   <meta property="og:description" content="Photo gallery — moments captured from travels around the world.">
-  <meta property="og:url" content="https://snapandsnacks.com/gallery">
+  <meta property="og:url" content="<%= siteUrl('/gallery') %>">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/gallery.css">
   <link rel="stylesheet" href="/css/style.css">
@@ -28,16 +29,16 @@
 
     <% if (photos.length > 0) { %>
     <div class="gallery-filter-bar">
-      <button class="gallery-filter-btn active" onclick="filterGallery('all', this)">All</button>
+      <button type="button" class="gallery-filter-btn active" data-gallery-filter="" aria-pressed="true">All</button>
       <%
         const allCaptions = photos.map(p => p.caption).filter(Boolean);
         const keywords = [...new Set(allCaptions.flatMap(c => c.split(/[,\s]+/).filter(w => w.length > 3)))].slice(0, 8);
         keywords.forEach(kw => {
       %>
-        <button class="gallery-filter-btn" onclick="filterGallery('<%= kw.toLowerCase() %>', this)"><%= kw %></button>
+        <button type="button" class="gallery-filter-btn" data-gallery-filter="<%= kw.toLowerCase() %>" aria-pressed="false"><%= kw %></button>
       <% }) %>
       <div class="gallery-search-box">
-        <input type="text" id="gallery-search" placeholder="Search photos..." oninput="searchGallery(this.value)">
+        <input type="search" id="gallery-search" placeholder="Search photos..." aria-label="Search photos">
       </div>
     </div>
     <% } %>
@@ -54,11 +55,15 @@
   <% } else { %>
 
   <div class="portfolio" id="photo-grid">
-    <% photos.forEach((photo, i) => { %>
-      <div class="project" 
-           data-caption="<%= (photo.caption || '').toLowerCase() %>"
+    <% photos.forEach(photo => { %>
+      <% const srcset = gallerySrcset(photo.src); %>
+      <div class="project"
+           data-caption="<%= photo.caption || '' %>"
            data-src="<%= photo.src %>">
-        <img class="project__image" src="<%= photo.src %>" alt="<%= photo.caption || 'Travel photo' %>" loading="lazy">
+        <img class="project__image" src="<%= photo.src %>"
+          <% if (srcset) { %>srcset="<%= srcset %>" sizes="(max-width: 640px) 50vw, (max-width: 900px) 33vw, 25vw"
+          onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %>
+          alt="<%= photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
         <% if (photo.caption) { %>
           <p class="project__tag"><%= photo.caption.split(',')[0] %></p>
           <h3 class="project__title"><%= photo.caption %></h3>
@@ -67,7 +72,7 @@
           <h3 class="project__title">Travel photo</h3>
         <% } %>
         <div class="grid__overlay">
-          <button class="view-btn" onclick="openLightbox('<%= photo.src %>', '<%= (photo.caption || '').replace(/'/g, "\\'") %>')">View photo</button>
+          <button type="button" class="view-btn" aria-haspopup="dialog">View photo</button>
         </div>
       </div>
     <% }) %>
@@ -77,66 +82,80 @@
     <div class="empty-state">
       <div class="empty-icon">🔍</div>
       <p>No photos found.</p>
-      <button class="btn btn-outline" onclick="filterGallery('all', document.querySelector('.gallery-filter-btn'))">Show all</button>
+      <button type="button" class="btn btn-outline" id="gallery-reset">Show all</button>
     </div>
   </div>
 
   <% } %>
 
-  <div class="lightbox-overlay" id="lightbox" onclick="closeLightbox(event)">
+  <dialog class="lightbox-overlay" id="lightbox" aria-label="Gallery photo" aria-describedby="lightbox-caption">
     <div class="lightbox-inner">
-      <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-      <img id="lightbox-img" src="" alt="">
+      <button type="button" class="lightbox-close" aria-label="Close photo" autofocus>✕</button>
+      <img id="lightbox-img" alt="">
       <div id="lightbox-caption" class="lightbox-caption"></div>
     </div>
-  </div>
+  </dialog>
 
   <%- include('partials/footer') %>
 
   <script>
-    // Lightbox
-    function openLightbox(src, caption) {
-      document.getElementById('lightbox-img').src = src;
-      document.getElementById('lightbox-caption').textContent = caption;
-      document.getElementById('lightbox').classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-    function closeLightbox(e) {
-      if (!e || e.target === document.getElementById('lightbox') || e.target.classList.contains('lightbox-close')) {
-        document.getElementById('lightbox').classList.remove('open');
-        document.body.style.overflow = '';
+    const photoGrid = document.getElementById('photo-grid');
+    if (photoGrid) {
+      const lightbox = document.getElementById('lightbox');
+      const image = document.getElementById('lightbox-img');
+      const caption = document.getElementById('lightbox-caption');
+      let opener;
+
+      photoGrid.addEventListener('click', event => {
+        const button = event.target.closest('.view-btn');
+        if (!button) return;
+        const photo = button.closest('.project');
+        opener = button;
+        image.src = photo.dataset.src;
+        image.alt = photo.dataset.caption || 'Travel photo';
+        caption.textContent = photo.dataset.caption;
+        lightbox.showModal();
+      });
+      lightbox.querySelector('.lightbox-close').addEventListener('click', () => lightbox.close());
+      lightbox.addEventListener('click', event => {
+        if (event.target === lightbox) lightbox.close();
+      });
+      lightbox.addEventListener('close', () => {
+        image.removeAttribute('src');
+        opener?.focus();
+      });
+
+      const filters = [...document.querySelectorAll('[data-gallery-filter]')];
+      const search = document.getElementById('gallery-search');
+      const noResults = document.getElementById('no-results');
+      const photoCount = document.getElementById('photo-count');
+      const photos = photoGrid.querySelectorAll('.project');
+      function showPhotos(query, activeFilter) {
+        const keyword = query.trim().toLowerCase();
+        for (const filter of filters) {
+          filter.classList.toggle('active', filter === activeFilter);
+          filter.setAttribute('aria-pressed', filter === activeFilter);
+        }
+        let visible = 0;
+        for (const photo of photos) {
+          const show = photo.dataset.caption.toLowerCase().includes(keyword);
+          photo.style.display = show ? '' : 'none';
+          if (show) visible++;
+        }
+        noResults.style.display = visible ? 'none' : 'block';
+        photoCount.textContent = visible;
       }
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
-
-    // Filter
-    function filterGallery(keyword, btn) {
-      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      document.getElementById('gallery-search').value = '';
-      const items = document.querySelectorAll('.project');
-      let visible = 0;
-      items.forEach(item => {
-        const show = keyword === 'all' || item.dataset.caption.includes(keyword.toLowerCase());
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
+      for (const filter of filters) {
+        filter.addEventListener('click', () => {
+          search.value = '';
+          showPhotos(filter.dataset.galleryFilter, filter);
+        });
+      }
+      search.addEventListener('input', () => showPhotos(search.value, null));
+      document.getElementById('gallery-reset').addEventListener('click', () => {
+        filters[0].click();
+        filters[0].focus();
       });
-      document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
-      document.getElementById('photo-count').textContent = visible;
-    }
-
-    // Search
-    function searchGallery(val) {
-      document.querySelectorAll('.gallery-filter-btn').forEach(b => b.classList.remove('active'));
-      const items = document.querySelectorAll('.project');
-      let visible = 0;
-      items.forEach(item => {
-        const show = !val || item.dataset.caption.includes(val.toLowerCase());
-        item.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-      document.getElementById('no-results').style.display = visible === 0 && val ? 'block' : 'none';
-      document.getElementById('photo-count').textContent = visible;
     }
 
     <%- include('partials/dark-toggle-script') %>

@@ -77,6 +77,9 @@ if (USE_CLOUDINARY && !process.env.CLOUDINARY_URL) {
 
 const isProduction = process.env.NODE_ENV === 'production';
 const siteOrigin = new URL(process.env.SITE_URL || 'https://snapandsnacks.com').origin;
+const galleryWidths = [320, 640, 960];
+const galleryDirectory = path.join(__dirname, 'public', 'gallery-uploads');
+const galleryFilename = /^[^./\\:\x00][^/\\:\x00]*\.(?:jpe?g|png|gif|webp)$/i;
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
   console.warn('SESSION_SECRET is not set; sessions will be invalidated when the server restarts.');
@@ -88,11 +91,7 @@ let Post, Gallery, Message, Admin, mongoose;
 
 if (USE_MONGO) {
   mongoose = require('mongoose');
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('  ✅  MongoDB connected!'))
-    .catch(err => console.error('  ❌  MongoDB error:', err.message));
-
-    const PostSchema = new mongoose.Schema({
+  const PostSchema = new mongoose.Schema({
     id: Number, title: String, content: String,
     category: String, tags: [String], image: String,
     date: String, slug: String, status: String,
@@ -206,6 +205,24 @@ async function convertToJpg(file) {
 
 // ─── App ──────────────────────────────────────────────────────────
 const app = express();
+app.locals.siteUrl = pathname => siteOrigin + pathname;
+app.locals.gallerySrcset = src => {
+  const localPrefix = '/gallery-uploads/';
+  let thumbnail;
+  if (sharp && typeof src === 'string' && src.startsWith(localPrefix)) {
+    let filename;
+    try { filename = decodeURIComponent(src.slice(localPrefix.length)); } catch {}
+    if (filename && galleryFilename.test(filename)) {
+      const encodedName = encodeURIComponent(filename);
+      thumbnail = width => '/gallery-thumbnails/' + width + '/' + encodedName;
+    }
+  }
+  if (typeof src === 'string' &&
+      /^https:\/\/res\.cloudinary\.com\/[\w-]+\/image\/upload\/v\d+\/[^?#]+$/.test(src)) {
+    thumbnail = width => src.replace('/image/upload/', '/image/upload/c_limit,w_' + width + '/q_auto/f_auto/');
+  }
+  return thumbnail ? galleryWidths.map(width => thumbnail(width) + ' ' + width + 'w').join(', ') : null;
+};
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', 1);
@@ -272,7 +289,7 @@ const imageFilter = (req, file, cb) => {
   if (ext && mime) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(Object.assign(new Error('Only image files are allowed.'), { status: 400 }), false);
   }
 };
 
@@ -370,30 +387,26 @@ function renderContent(text) {
 // PUBLIC ROUTES
 // ═══════════════════════════════════════════════════════════════════
 
-app.get('/', async (req, res) => {
+app.get('/', async (req, res, next) => {
   try {
-    let posts, latestPhotos, categories, photoCount;
+    let posts, latestPhotos;
     if (USE_MONGO) {
       posts = await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 });
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
-      latestPhotos = await Gallery.find().sort({ id: -1 }).limit(6);
-      photoCount = await Gallery.countDocuments();
-      categories = [...new Set(posts.map(p => p.category))];
+      latestPhotos = await Gallery.find().sort({ id: -1 }).limit(4);
     } else {
       const db = readDB();
       posts = [...db.posts].filter(p => p.status !== 'draft').reverse();
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
-      latestPhotos = [...db.gallery].reverse().slice(0, 6);
-      photoCount = db.gallery.length;
-      categories = [...new Set(posts.map(p => p.category))];
+      latestPhotos = [...db.gallery].reverse().slice(0, 4);
     }
-    res.render('home', { posts, latestPhotos, categories, photoCount });
-  } catch (err) { res.status(500).render('404'); }
+    res.render('home', { posts, latestPhotos });
+  } catch (err) { next(err); }
 });
 
-app.get('/blog', async (req, res) => {
+app.get('/blog', async (req, res, next) => {
   try {
     const { category, search } = req.query;
     let posts, categories;
@@ -418,10 +431,24 @@ app.get('/blog', async (req, res) => {
       categories = [...new Set(db.posts.filter(p => p.status !== 'draft').map(p => p.category))];
     }
     res.render('blog', { posts, categories, activeCategory: category || '', search: search || '' });
-  } catch (err) { res.status(500).render('404'); }
+  } catch (err) { next(err); }
 });
 
-app.get('/post/:slug', async (req, res) => {
+function postPath(slug) {
+  return '/post/' + encodeURIComponent(slug);
+}
+
+function renderPost(res, post, options) {
+  const postUrl = siteOrigin + postPath(post.slug);
+  const readTime = Math.max(1, Math.round(post.content.split(/\s+/).length / 200));
+  res.render('post', {
+    post, postUrl, readTime, renderContent, shareImageUrl: socialImageUrl(post.image),
+    related: [], generalRelated: [], categoryCounts: null, pending: false, commentError: null,
+    isPreview: false, ...options
+  });
+}
+
+app.get('/post/:slug', async (req, res, next) => {
   try {
     let post, related, generalRelated, categoryCounts;
     if (USE_MONGO) {
@@ -451,23 +478,26 @@ app.get('/post/:slug', async (req, res) => {
         Lifestyle: db.posts.filter(p => p.category === 'Lifestyle' && p.status !== 'draft').length
       };
     }
-    const words = post.content.split(/\s+/).length;
-    const readTime = Math.max(1, Math.round(words / 200));
-    const postUrl = new URL('/post/' + encodeURIComponent(post.slug), siteOrigin).href;
-    res.render('post', {
-      post, related, generalRelated, categoryCounts, readTime, renderContent,
-      postUrl, shareImageUrl: socialImageUrl(post.image), pending: req.query.pending === '1'
+    renderPost(res, post, {
+      related, generalRelated, categoryCounts, pending: req.query.pending === '1',
+      commentError: req.query.commentError === 'invalid'
+        ? 'Enter a name and comment within the length limits, and use a valid email address if you provide one.'
+        : req.query.commentError === 'unavailable' ? 'Your comment could not be saved. Please try again.' : null
     });
-  } catch (err) { res.status(500).render('404'); }
+  } catch (err) { next(err); }
 });
 
 app.post('/post/:slug/comment', commentLimiter, csrfProtection, async (req, res) => {
-  const { name, email, comment } = req.body;
-  if (!name || !comment) return res.redirect('/post/' + req.params.slug);
-  if (name.length > 100 || comment.length > 2000) return res.redirect('/post/' + req.params.slug);
+  const name = cleanText(req.body?.name, 101);
+  const email = cleanText(req.body?.email, 255);
+  const comment = cleanText(req.body?.comment, 2001);
+  const pathToPost = postPath(req.params.slug);
+  if (!name || name.length > 100 || !comment || comment.length > 2000 || (email && !isValidEmail(email))) {
+    return res.redirect(303, pathToPost + '?commentError=invalid#comments');
+  }
   try {
     if (USE_MONGO) {
-      const post = await Post.findOne({ slug: req.params.slug });
+      const post = await Post.findOne({ slug: req.params.slug, status: { $ne: 'draft' } });
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()), approved: false });
@@ -484,7 +514,7 @@ app.post('/post/:slug/comment', commentLimiter, csrfProtection, async (req, res)
       );
     } else {
       const db = readDB();
-      const post = db.posts.find(p => p.slug === req.params.slug);
+      const post = db.posts.find(p => p.slug === req.params.slug && p.status !== 'draft');
       if (!post) return res.redirect('/');
       if (!post.comments) post.comments = [];
       post.comments.push({ id: Date.now(), name: name.trim(), email: email ? email.trim() : '', comment: comment.trim(), date: formatDate(new Date()), approved: false });
@@ -501,25 +531,48 @@ app.post('/post/:slug/comment', commentLimiter, csrfProtection, async (req, res)
 <a href="https://snapandsnacks.com/admin">Review in dashboard →</a>`
 );
     }
-    res.redirect('/post/' + req.params.slug + '?pending=1#comments');
-  } catch (err) { res.redirect('/'); }
+    res.redirect(303, pathToPost + '?pending=1#comments');
+  } catch (err) {
+    res.redirect(303, pathToPost + '?commentError=unavailable#comments');
+  }
 });
 
-app.get('/gallery', async (req, res) => {
+app.get('/gallery-thumbnails/:width/:filename', async (req, res, next) => {
+  const { width, filename } = req.params;
+  if (!galleryWidths.some(size => String(size) === width) || !galleryFilename.test(filename)) return next();
+  const originalUrl = '/gallery-uploads/' + encodeURIComponent(filename);
+  if (!sharp) return res.redirect(originalUrl);
+  const filePath = path.join(galleryDirectory, filename);
+  try {
+    await fs.promises.access(filePath, fs.constants.R_OK);
+  } catch (err) {
+    if (err.code === 'ENOENT') return next();
+    throw err;
+  }
+  let image;
+  try {
+    image = await sharp(filePath).rotate().resize({ width: Number(width), withoutEnlargement: true })
+      .webp({ quality: 80 }).toBuffer();
+  } catch {
+    return res.redirect(originalUrl);
+  }
+  res.set('Cache-Control', 'public, max-age=86400').type('webp').send(image);
+});
+
+app.get('/gallery', async (req, res, next) => {
   try {
     const photos = USE_MONGO
       ? await Gallery.find().sort({ id: -1 })
       : [...readDB().gallery].reverse();
     res.render('gallery', { photos });
-  } catch (err) { res.status(500).render('404'); }
+  } catch (err) { next(err); }
 });
 
 app.get('/tags', async (req, res) => {
-  const db = readDB();
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } })
-    : db.posts.filter(p => p.status !== 'draft');
-  const tagMap = {};
+    : readDB().posts.filter(p => p.status !== 'draft');
+  const tagMap = Object.create(null);
   posts.forEach(post => {
     (post.tags || []).forEach(tag => {
       if (!tagMap[tag]) tagMap[tag] = [];
@@ -530,20 +583,19 @@ app.get('/tags', async (req, res) => {
 });
 
 app.get('/tags/:tag', async (req, res) => {
-  const db = readDB();
   const allPosts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } })
-    : db.posts.filter(p => p.status !== 'draft');
+    : readDB().posts.filter(p => p.status !== 'draft');
   const tag = req.params.tag;
   const posts = allPosts.filter(p => (p.tags || []).includes(tag));
+  if (posts.length === 0) return res.status(404).render('404');
   res.render('tag-posts', { tag, posts });
 });
 
 app.get('/archive', async (req, res) => {
-  const db = readDB();
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 })
-    : db.posts.filter(p => p.status !== 'draft').reverse();
+    : readDB().posts.filter(p => p.status !== 'draft').reverse();
   const archive = {};
   posts.forEach(post => {
     const date = new Date(post.id);
@@ -555,9 +607,9 @@ app.get('/archive', async (req, res) => {
 });
 
 app.post('/newsletter', newsletterLimiter, csrfProtection, async (req, res) => {
-  const { email } = req.body;
-  if (!email || !email.includes('@')) return res.redirect(req.get('Referrer') || '/');
-  if (email.length > 200) return res.redirect(req.get('Referrer') || '/');
+  const email = cleanText(req.body?.email, 255);
+  const respond = (status, message) => res.status(status).type('text').send(message);
+  if (!isValidEmail(email)) return respond(400, 'Enter a valid email address.');
   try {
     if (USE_MONGO) {
       const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
@@ -582,8 +634,10 @@ app.post('/newsletter', newsletterLimiter, csrfProtection, async (req, res) => {
         writeDB(db);
       }
     }
-    res.redirect(req.get('Referrer') || '/');
-  } catch (err) { res.redirect(req.get('Referrer') || '/'); }
+    return respond(200, 'Thanks! You’re on the newsletter list.');
+  } catch (err) {
+    return respond(503, 'Subscription is temporarily unavailable. Please try again.');
+  }
 });
 
 app.get('/admin/newsletter', requireLogin, async (req, res) => {
@@ -601,12 +655,18 @@ app.get('/admin/newsletter', requireLogin, async (req, res) => {
 app.get('/privacy', (req, res) => res.render('privacy'));
 app.get('/terms',   (req, res) => res.render('terms'));
 app.get('/about',   (req, res) => res.render('about'));
-app.get('/contact', (req, res) => res.render('contact', { success: false }));
+app.get('/contact', (req, res) => res.render('contact', { success: false, error: null, fields: {} }));
 
 app.post('/contact', contactLimiter, csrfProtection, async (req, res) => {
-  const { name, email, message } = req.body;
-  if (!name || !email || !message) return res.render('contact', { success: false });
-  if (name.length > 100 || message.length > 5000) return res.render('contact', { success: false });
+  const name = cleanText(req.body?.name, 101);
+  const email = cleanText(req.body?.email, 255);
+  const message = cleanText(req.body?.message, 5001);
+  const fields = { name, email, message };
+  if (!name || name.length > 100 || !isValidEmail(email) || !message || message.length > 5000) {
+    return res.status(400).render('contact', {
+      success: false, fields, error: 'Enter a name, a valid email address, and a message within the length limits.'
+    });
+  }
   try {
     if (USE_MONGO) {
       await Message.create({ id: Date.now(), name: name.trim(), email: email.trim(), message: message.trim(), date: formatDate(new Date()), read: false });
@@ -625,7 +685,11 @@ app.post('/contact', contactLimiter, csrfProtection, async (req, res) => {
       writeDB(db);
     }
     res.render('contact', { success: true });
-  } catch (err) { res.render('contact', { success: false }); }
+  } catch (err) {
+    res.status(503).render('contact', {
+      success: false, fields, error: 'Your message could not be saved. Please try again.'
+    });
+  }
 });
 
 // ═══════════════════════════════════════════════════════════════════
@@ -665,7 +729,7 @@ app.post('/admin/login', loginLimiter, async (req, res) => {
 
 app.get('/admin/logout', (req, res) => { req.session.destroy(); res.redirect('/admin/login'); });
 
-app.get('/admin', requireLogin, async (req, res) => {
+app.get('/admin', requireLogin, async (req, res, next) => {
   try {
     let posts, drafts, photoCount, unreadMessages;
     if (USE_MONGO) {
@@ -681,10 +745,29 @@ app.get('/admin', requireLogin, async (req, res) => {
       unreadMessages = (db.messages || []).filter(m => !m.read).length;
     }
     res.render('admin/dashboard', { posts, drafts, photoCount, unreadMessages });
-  } catch (err) { res.status(500).render('404'); }
+  } catch (err) { next(err); }
 });
 
 app.get('/admin/new', requireLogin, (req, res) => res.render('admin/form', { post: null, error: null }));
+
+app.get('/admin/preview/:id', requireLogin, async (req, res, next) => {
+  res.set({
+    'Cache-Control': 'private, no-store',
+    'X-Robots-Tag': 'noindex',
+    'Referrer-Policy': 'no-referrer'
+  });
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isSafeInteger(id)) return res.status(404).render('404');
+    const post = USE_MONGO
+      ? await Post.findOne({ id, status: 'draft' })
+      : readDB().posts.find(p => p.id === id && p.status === 'draft');
+    if (!post) return res.status(404).render('404');
+    renderPost(res, post, { isPreview: true });
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async (req, res) => {
   const action = req.body.action;
@@ -1018,64 +1101,66 @@ app.post('/admin/password', requireLogin, async (req, res) => {
 
 // ─── Sitemap & Robots ─────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
-  const base = 'https://snapandsnacks.com';
   const posts = USE_MONGO
-    ? await Post.find({ status: { $ne: 'draft' } })
+    ? await Post.find({ status: { $ne: 'draft' } }).select('slug')
     : readDB().posts.filter(p => p.status !== 'draft');
-  let xml = `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>${base}/</loc><priority>1.0</priority></url>
-  <url><loc>${base}/blog</loc><priority>0.9</priority></url>
-  <url><loc>${base}/gallery</loc><priority>0.8</priority></url>
-  <url><loc>${base}/about</loc><priority>0.7</priority></url>
-  <url><loc>${base}/contact</loc><priority>0.6</priority></url>`;
-  posts.forEach(p => {
-    xml += `<url><loc>${base}/post/${p.slug}</loc><priority>0.8</priority></url>`;
-  });
-  xml += `</urlset>`;
-  res.header('Content-Type', 'application/xml');
-  res.send(xml);
+  const paths = ['/', '/blog', '/gallery', '/about', '/contact', '/tags', '/archive'];
+  const urls = paths.concat(posts.filter(post => post.slug).map(post => postPath(post.slug)));
+  const entries = urls.map(url => '<url><loc>' + escapeHtml(siteOrigin + url) + '</loc></url>').join('\n');
+  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}
+</urlset>`);
 });
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: https://snapandsnacks.com/sitemap.xml');
+  res.send('User-agent: *\nAllow: /\nDisallow: /admin\nSitemap: ' + siteOrigin + '/sitemap.xml\n');
 });
-
-app.use((err, req, res, next) => {
-  if (err.code === 'IMAGE_UPLOAD_FAILED') {
-    return res.status(502).send(err.message);
-  }
-  if (err instanceof multer.MulterError) {
-    return res.status(400).send(err.code === 'LIMIT_FILE_SIZE' ? 'Images must be 10 MB or smaller.' : 'Invalid file upload.');
-  }
-  if (err) {
-    console.error('Request error:', err.message);
-    return res.status(400).send('Unable to process this request.');
-  }
-  next();
-});
-
 
 app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'ok',
+  const ready = !USE_MONGO || mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({
+    status: ready ? 'ok' : 'unavailable',
     timestamp: new Date().toISOString(),
     uptimeSeconds: Math.floor(process.uptime())
   });
 });
 
+app.use((req, res) => res.status(404).render('404'));
+
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  if (err.code === 'IMAGE_UPLOAD_FAILED') return res.status(502).send(err.message);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).send(err.code === 'LIMIT_FILE_SIZE' ? 'Images must be 10 MB or smaller.' : 'Invalid file upload.');
+  }
+  const status = err.status;
+  if (status === 404) return res.status(404).render('404');
+  if (Number.isInteger(status) && status >= 400 && status < 500) {
+    return res.status(status).send('Unable to process this request.');
+  }
+  console.error('Request failed:', err.code || err.name);
+  res.status(500).render('500');
+});
+
 // ─── Start ────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
+async function start() {
   if (USE_MONGO) {
-    // Create admin if not exists
+    await mongoose.connect(process.env.MONGODB_URI);
     const admin = await Admin.findOne({});
     if (!admin) await Admin.create(initialAdmin());
   }
-  console.log('');
-  console.log('  ✅  Snap & Snack is live!');
-  console.log('  🌍  Mode: ' + (USE_MONGO ? 'MongoDB' : 'Local JSON'));
-  console.log('  🌍  Your blog  →  http://localhost:' + PORT);
-  console.log('  🔧  Admin      →  http://localhost:' + PORT + '/admin');
-  console.log('');
+  app.listen(PORT, () => {
+    console.log('  ✅  Snap & Snack is live!');
+    console.log('  🌍  Mode: ' + (USE_MONGO ? 'MongoDB' : 'Local JSON'));
+    console.log('  🌍  Your blog  →  http://localhost:' + PORT);
+    console.log('  🔧  Admin      →  http://localhost:' + PORT + '/admin');
+  });
+}
+start().catch(async err => {
+  console.error('Startup failed:', err.name);
+  if (USE_MONGO) await mongoose.disconnect();
+  process.exitCode = 1;
 });

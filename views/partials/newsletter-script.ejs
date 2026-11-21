@@ -1,0 +1,22 @@
+for (const form of document.querySelectorAll('[data-newsletter-form]')) {
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    const button = form.querySelector('button[type="submit"]');
+    const status = form.parentElement.querySelector('[data-newsletter-status]');
+    button.disabled = true;
+    status.textContent = 'Subscribing…';
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        body: new URLSearchParams(new FormData(form)),
+        redirect: 'error'
+      });
+      status.textContent = await response.text();
+      if (response.ok) form.reset();
+    } catch {
+      status.textContent = 'Subscription is temporarily unavailable. Please try again.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+}
