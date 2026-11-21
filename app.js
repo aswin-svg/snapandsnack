@@ -60,20 +60,23 @@ const bcrypt = require('bcryptjs');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 let sharp;
 try { sharp = require('sharp'); } catch (e) { sharp = null; }
 
 const cloudinary = require('cloudinary').v2;
-const USE_CLOUDINARY = !!process.env.CLOUDINARY_CLOUD_NAME;
-if (USE_CLOUDINARY) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
+const cloudinaryCredentials = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME?.trim(),
+  api_key: process.env.CLOUDINARY_API_KEY?.trim(),
+  api_secret: process.env.CLOUDINARY_API_SECRET?.trim()
+};
+const USE_CLOUDINARY = Boolean(process.env.CLOUDINARY_URL || Object.values(cloudinaryCredentials).some(Boolean));
+if (USE_CLOUDINARY && !process.env.CLOUDINARY_URL) {
+  cloudinary.config(cloudinaryCredentials);
 }
 
 const isProduction = process.env.NODE_ENV === 'production';
+const siteOrigin = new URL(process.env.SITE_URL || 'https://snapandsnacks.com').origin;
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
   console.warn('SESSION_SECRET is not set; sessions will be invalidated when the server restarts.');
@@ -147,25 +150,57 @@ function writeDB(data) {
 }
 
 // ─── Image conversion ─────────────────────────────────────────────
-async function uploadToCloudinary(file, folder) {
-  if (!USE_CLOUDINARY) return '/uploads/' + file.filename;
-  const result = await cloudinary.uploader.upload(file.path, { folder });
-  fs.unlinkSync(file.path);
-  return result.secure_url;
+async function removeUploadFile(filePath) {
+  try {
+    await fs.promises.rm(filePath, { force: true });
+  } catch (err) {
+    console.error('Image file cleanup failed:', err.code);
+  }
+}
+
+async function uploadImages(files, folder, localDirectory) {
+  if (!files.length) return;
+  try {
+    if (USE_CLOUDINARY) {
+      const { cloud_name, api_key, api_secret } = cloudinary.config();
+      if (!cloud_name || !api_key || !api_secret) {
+        throw new Error('Cloudinary credentials are incomplete.');
+      }
+    }
+    for (const file of files) {
+      await convertToJpg(file);
+      if (USE_CLOUDINARY) {
+        const result = await cloudinary.uploader.upload(file.path, { folder, resource_type: 'image' });
+        if (!result.secure_url) throw new Error('Cloudinary did not return an image URL.');
+        file.uploadedSrc = result.secure_url;
+      } else {
+        file.uploadedSrc = '/' + localDirectory + '/' + file.filename;
+      }
+    }
+  } catch (err) {
+    console.error('Image upload failed:', err.http_code || err.code || err.message);
+    const uploadError = new Error('Image upload failed. Check the image and upload configuration, then try again.', { cause: err });
+    uploadError.code = 'IMAGE_UPLOAD_FAILED';
+    throw uploadError;
+  } finally {
+    if (USE_CLOUDINARY) await Promise.all(files.map(file => removeUploadFile(file.path)));
+  }
 }
 
 async function convertToJpg(file) {
   if (!sharp) return; // skip if sharp not available
+  const originalPath = file.path;
+  const finalPath = path.join(path.dirname(originalPath), path.parse(file.filename).name + '.jpg');
+  const tmpPath = finalPath + '.tmp.jpg';
   try {
-    const finalPath = path.join(path.dirname(file.path), path.parse(file.filename).name + '.jpg');
-    const tmpPath = finalPath + '.tmp.jpg';
-    await sharp(file.path).rotate().jpeg({ quality: 88 }).toFile(tmpPath);
-    fs.unlinkSync(file.path);
-    fs.renameSync(tmpPath, finalPath);
+    await sharp(originalPath).rotate().jpeg({ quality: 88 }).toFile(tmpPath);
+    await fs.promises.rename(tmpPath, finalPath);
     file.path = finalPath;
     file.filename = path.basename(finalPath);
+    if (originalPath !== finalPath) await removeUploadFile(originalPath);
   } catch (err) {
     console.error('Image conversion error:', err.message);
+    await removeUploadFile(tmpPath);
   }
 }
 
@@ -223,14 +258,12 @@ app.use((req, res, next) => {
 });
 
 // ─── Uploads ──────────────────────────────────────────────────────
-const postStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const galleryStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'public/gallery-uploads/'),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
+function imageStorage(localDirectory) {
+  return multer.diskStorage({
+    destination: USE_CLOUDINARY ? os.tmpdir() : path.join(__dirname, 'public', localDirectory),
+    filename: (req, file, cb) => cb(null, crypto.randomUUID() + path.extname(file.originalname).toLowerCase())
+  });
+}
 const imageFilter = (req, file, cb) => {
   const allowedExtensions = new Set(['.jpeg', '.jpg', '.png', '.gif', '.webp']);
   const allowedMimes = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -243,8 +276,8 @@ const imageFilter = (req, file, cb) => {
   }
 };
 
-const uploadPost    = multer({ storage: postStorage,    limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
-const uploadGallery = multer({ storage: galleryStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadPost    = multer({ storage: imageStorage('uploads'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadGallery = multer({ storage: imageStorage('gallery-uploads'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: imageFilter });
 
 // ─── Helpers ──────────────────────────────────────────────────────
 function requireLogin(req, res, next) {
@@ -273,6 +306,17 @@ function verifyImageUploads(req, res, next) {
 }
 function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]);
+}
+function socialImageUrl(image) {
+  if (image) {
+    try {
+      const url = new URL(image, siteOrigin);
+      if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+    } catch {
+      // Use the site image if an older post has an invalid image URL.
+    }
+  }
+  return new URL('/logo.png', siteOrigin).href;
 }
 function safeUrl(value) {
   const url = String(value).trim();
@@ -409,7 +453,11 @@ app.get('/post/:slug', async (req, res) => {
     }
     const words = post.content.split(/\s+/).length;
     const readTime = Math.max(1, Math.round(words / 200));
-    res.render('post', { post, related, generalRelated, categoryCounts, readTime, renderContent, pending: req.query.pending === '1' });
+    const postUrl = new URL('/post/' + encodeURIComponent(post.slug), siteOrigin).href;
+    res.render('post', {
+      post, related, generalRelated, categoryCounts, readTime, renderContent,
+      postUrl, shareImageUrl: socialImageUrl(post.image), pending: req.query.pending === '1'
+    });
   } catch (err) { res.status(500).render('404'); }
 });
 
@@ -646,13 +694,13 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
   const tags = cleanText(req.body.tags, 500);
   const metaTitle = cleanText(req.body.metaTitle, 70);
   const metaDescription = cleanText(req.body.metaDescription, 160);
-  if (!title || !content) return res.render('admin/form', { post: null, error: 'Title and content are required.' });
+  const files = req.files || [];
+  if (!title || !content) {
+    await Promise.all(files.map(file => removeUploadFile(file.path)));
+    return res.render('admin/form', { post: null, error: 'Title and content are required.' });
+  }
   try {
-        const files = req.files || [];
-    await Promise.all(files.map(convertToJpg));
-    for (const file of files) {
-      file.uploadedSrc = await uploadToCloudinary(file, 'snapandsnacks-posts');
-    }
+    await uploadImages(files, 'snapandsnacks-posts', 'uploads');
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -673,7 +721,12 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
       writeDB(db);
     }
     res.redirect('/admin');
-  } catch (err) { res.render('admin/form', { post: null, error: 'Error creating post.' }); }
+  } catch (err) {
+    if (err.code === 'IMAGE_UPLOAD_FAILED') {
+      return res.status(502).render('admin/form', { post: null, error: err.message });
+    }
+    res.render('admin/form', { post: null, error: 'Error creating post.' });
+  }
 });
 
 app.get('/admin/edit/:id', requireLogin, async (req, res) => {
@@ -686,7 +739,7 @@ app.get('/admin/edit/:id', requireLogin, async (req, res) => {
   } catch (err) { res.redirect('/admin'); }
 });
 
-app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, async (req, res) => {
+app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, async (req, res, next) => {
   const action = req.body.action;
   const title = cleanText(req.body.title, 160);
   let content = cleanText(req.body.content, 100000);
@@ -695,11 +748,8 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
   const metaTitle = cleanText(req.body.metaTitle, 70);
   const metaDescription = cleanText(req.body.metaDescription, 160);
   try {
-        const files = req.files || [];
-    await Promise.all(files.map(convertToJpg));
-    for (const file of files) {
-      file.uploadedSrc = await uploadToCloudinary(file, 'snapandsnacks-posts');
-    }
+    const files = req.files || [];
+    await uploadImages(files, 'snapandsnacks-posts', 'uploads');
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
     content = processInlineImages(content, inlineFiles);
@@ -731,7 +781,10 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       writeDB(db);
     }
     res.redirect('/admin');
-  } catch (err) { res.redirect('/admin'); }
+  } catch (err) {
+    if (err.code === 'IMAGE_UPLOAD_FAILED') return next(err);
+    res.redirect('/admin');
+  }
 });
 
 app.post('/admin/publish/:id', requireLogin, async (req, res) => {
@@ -851,20 +904,8 @@ app.get('/admin/gallery', requireLogin, async (req, res) => {
 
 app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20), verifyImageUploads, async (req, res) => {
   const captions = req.body.captions;
-  await Promise.all(req.files.map(convertToJpg));
-
-  const uploaded = [];
-  for (const file of req.files) {
-    let src;
-    if (USE_CLOUDINARY) {
-      const result = await cloudinary.uploader.upload(file.path, { folder: 'snapandsnacks-gallery' });
-      src = result.secure_url;
-      fs.unlinkSync(file.path);
-    } else {
-      src = '/gallery-uploads/' + file.filename;
-    }
-    uploaded.push(src);
-  }
+  await uploadImages(req.files, 'snapandsnacks-gallery', 'gallery-uploads');
+  const uploaded = req.files.map(file => file.uploadedSrc);
 
   if (USE_MONGO) {
     for (let i = 0; i < uploaded.length; i++) {
@@ -1001,6 +1042,9 @@ app.get('/robots.txt', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  if (err.code === 'IMAGE_UPLOAD_FAILED') {
+    return res.status(502).send(err.message);
+  }
   if (err instanceof multer.MulterError) {
     return res.status(400).send(err.code === 'LIMIT_FILE_SIZE' ? 'Images must be 10 MB or smaller.' : 'Invalid file upload.');
   }
