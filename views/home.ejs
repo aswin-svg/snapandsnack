@@ -20,13 +20,13 @@
 <body class="journal">
   <%- include('partials/nav', { active: 'home' }) %>
   <% const featured = posts[0]; const recent = posts.slice(1, 7); %>
-  <% const cover = featured?.image || '/gallery-uploads/rara2.JPG'; const coverSet = gallerySrcset(cover); %>
+  <% const cover = featured?.image || '/gallery-uploads/rara2.JPG'; %>
   <main class="journal-main">
     <section class="journal-hero" aria-labelledby="journal-title">
       <div class="journal-cover">
         <img src="<%= cover %>" alt="<%= featured?.image ? featured.title : 'Rara Lake, Nepal' %>"
-          <% if (coverSet) { %>srcset="<%= coverSet %>" sizes="(max-width: 1360px) 100vw, 1320px"
-          onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %> fetchpriority="high">
+          <%- responsiveImageAttributes(cover, '(max-width: 760px) calc(100vw - 2rem), (max-width: 1384px) calc(100vw - 4rem), 1320px', true) %>
+          fetchpriority="high">
       </div>
       <div class="journal-intro">
         <p class="journal-kicker">Travel · Food · Lifestyle</p>
@@ -45,9 +45,9 @@
     </section>
 
     <nav class="journal-topics" aria-label="Explore by topic">
-      <a href="/blog?category=Travel">Travel <span aria-hidden="true">↗</span></a>
-      <a href="/blog?category=Food">Food <span aria-hidden="true">↗</span></a>
-      <a href="/blog?category=Lifestyle">Lifestyle <span aria-hidden="true">↗</span></a>
+      <% for (const topic of topics) { %>
+        <a href="/topics/<%= topic.slug %>"><%= topic.name %> <span aria-hidden="true">↗</span></a>
+      <% } %>
       <a href="/gallery">Photography <span aria-hidden="true">↗</span></a>
     </nav>
 
@@ -63,7 +63,8 @@
             <% const href = '/post/' + encodeURIComponent(post.slug); %>
             <% if (post.image) { %>
               <a href="<%= href %>" class="journal-story-image" tabindex="-1" aria-hidden="true">
-                <img src="<%= post.image %>" alt="" loading="lazy" decoding="async">
+                <img src="<%= post.image %>" alt="" loading="lazy" decoding="async"
+                  <%- responsiveImageAttributes(post.image, '(max-width: 600px) calc(100vw - 2rem), (max-width: 900px) 48vw, (max-width: 1384px) 31vw, 430px') %>>
               </a>
             <% } %>
             <div class="journal-story-body">
@@ -89,7 +90,7 @@
           <a href="/gallery">
             <img src="<%= photo.src %>" <% if (srcset) { %>srcset="<%= srcset %>" sizes="(max-width: 600px) 50vw, 25vw"
               onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %>
-              alt="<%= photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
+              alt="<%= photo.altText || photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
           </a>
         <% }) %>
       </div>

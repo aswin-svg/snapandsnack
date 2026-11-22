@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery — Snap & Snack Admin</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -29,6 +30,7 @@
       </div>
       <a href="/gallery" target="_blank" class="btn btn-outline btn-sm">View public gallery ↗</a>
     </div>
+    <% if (saved) { %><p class="alert" role="status">Photo details saved.</p><% } %>
 
     <!-- Upload form -->
     <div class="form-card" style="margin-bottom:2rem">
@@ -60,21 +62,25 @@
       </div>
     <% } else { %>
       <div class="section-heading">Your photos</div>
+      <p class="gallery-admin-hint">Lower display numbers come first. Leave a number blank to keep that photo in newest-first order. The homepage shows up to four, starting with marked photos.</p>
       <div class="photo-admin-grid">
         <% photos.forEach(photo => { %>
           <div class="photo-admin-card">
-            <img src="<%= photo.src %>" alt="<%= photo.caption || 'Photo' %>">
-            <div class="photo-admin-footer">
-  <form method="POST" action="/admin/gallery/edit/<%= photo.id %>" style="display:flex;gap:6px;align-items:center;flex:1">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <input type="text" name="caption" value="<%= photo.caption || '' %>" placeholder="Add caption..." style="font-size:0.8rem;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;width:100%;font-family:inherit">
-    <button type="submit" class="btn btn-sm btn-outline">Save</button>
-  </form>
-  <form method="POST" action="/admin/gallery/delete/<%= photo.id %>" onsubmit="return confirm('Delete this photo?')">
-    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-  </form>
-</div>
+            <img src="<%= photo.src %>" alt="<%= photo.altText || photo.caption || 'Photo' %>" loading="lazy">
+            <div class="photo-admin-settings">
+              <form method="POST" action="/admin/gallery/edit/<%= photo.id %>">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <label>Caption <input type="text" name="caption" maxlength="250" value="<%= photo.caption || '' %>"></label>
+                <label>Alt text <input type="text" name="altText" maxlength="250" value="<%= photo.altText || '' %>" placeholder="Describe what’s shown"></label>
+                <label>Display order <input type="number" name="displayOrder" min="1" max="999999" step="1" value="<%= photo.displayOrder ?? '' %>"></label>
+                <label class="photo-admin-feature"><input type="checkbox" name="featured" value="yes" <%= photo.featured ? 'checked' : '' %>> Show on homepage first</label>
+                <button type="submit" class="btn btn-sm btn-outline">Save</button>
+              </form>
+              <form method="POST" action="/admin/gallery/delete/<%= photo.id %>" onsubmit="return confirm('Delete this photo?')">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </div>
           </div>
         <% }) %>
       </div>

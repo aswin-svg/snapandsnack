@@ -63,7 +63,7 @@
         <img class="project__image" src="<%= photo.src %>"
           <% if (srcset) { %>srcset="<%= srcset %>" sizes="(max-width: 640px) 50vw, (max-width: 900px) 33vw, 25vw"
           onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %>
-          alt="<%= photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
+          alt="<%= photo.altText || photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
         <% if (photo.caption) { %>
           <p class="project__tag"><%= photo.caption.split(',')[0] %></p>
           <h3 class="project__title"><%= photo.caption %></h3>
@@ -112,7 +112,7 @@
         const photo = button.closest('.project');
         opener = button;
         image.src = photo.dataset.src;
-        image.alt = photo.dataset.caption || 'Travel photo';
+        image.alt = photo.querySelector('img').alt;
         caption.textContent = photo.dataset.caption;
         lightbox.showModal();
       });

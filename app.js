@@ -78,8 +78,15 @@ if (USE_CLOUDINARY && !process.env.CLOUDINARY_URL) {
 const isProduction = process.env.NODE_ENV === 'production';
 const siteOrigin = new URL(process.env.SITE_URL || 'https://snapandsnacks.com').origin;
 const galleryWidths = [320, 640, 960];
-const galleryDirectory = path.join(__dirname, 'public', 'gallery-uploads');
-const galleryFilename = /^[^./\\:\x00][^/\\:\x00]*\.(?:jpe?g|png|gif|webp)$/i;
+const storyWidths = [320, 640, 960, 1440, 1920];
+const imageFilename = /^[^./\\:\x00][^/\\:\x00]*\.(?:jpe?g|png|gif|webp)$/i;
+const articleImageSizes = '(max-width: 900px) calc(100vw - 3rem), (max-width: 1160px) calc(100vw - 416px), 744px';
+const topics = [
+  { slug: 'travel', name: 'Travel', description: 'Places, journeys, and stories from the road.' },
+  { slug: 'food', name: 'Food', description: 'Memorable meals, street food, and places to eat.' },
+  { slug: 'lifestyle', name: 'Lifestyle', description: 'Everyday discoveries and life between trips.' }
+];
+const newsletterRecord = { name: 'newsletter', message: 'Newsletter subscriber' };
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
   console.warn('SESSION_SECRET is not set; sessions will be invalidated when the server restarts.');
@@ -100,7 +107,8 @@ if (USE_MONGO) {
   });
 
   const GallerySchema = new mongoose.Schema({
-    id: Number, src: String, caption: String, date: String
+    id: Number, src: String, caption: String, date: String,
+    altText: String, displayOrder: Number, featured: Boolean
   });
   const MessageSchema = new mongoose.Schema({
     id: Number, name: String, email: String,
@@ -206,23 +214,35 @@ async function convertToJpg(file) {
 // ─── App ──────────────────────────────────────────────────────────
 const app = express();
 app.locals.siteUrl = pathname => siteOrigin + pathname;
-app.locals.gallerySrcset = src => {
-  const localPrefix = '/gallery-uploads/';
+app.locals.topics = topics;
+function imageSrcset(src, widths) {
+  if (typeof src !== 'string') return null;
   let thumbnail;
-  if (sharp && typeof src === 'string' && src.startsWith(localPrefix)) {
+  const local = /^\/(uploads|gallery-uploads)\/([^?#]+)$/.exec(src);
+  if (sharp && local) {
     let filename;
-    try { filename = decodeURIComponent(src.slice(localPrefix.length)); } catch {}
-    if (filename && galleryFilename.test(filename)) {
+    try { filename = decodeURIComponent(local[2]); } catch {}
+    if (filename && imageFilename.test(filename)) {
       const encodedName = encodeURIComponent(filename);
-      thumbnail = width => '/gallery-thumbnails/' + width + '/' + encodedName;
+      const endpoint = local[1] === 'uploads' ? '/post-thumbnails/' : '/gallery-thumbnails/';
+      thumbnail = width => endpoint + width + '/' + encodedName;
     }
   }
-  if (typeof src === 'string' &&
-      /^https:\/\/res\.cloudinary\.com\/[\w-]+\/image\/upload\/v\d+\/[^?#]+$/.test(src)) {
+  if (/^https:\/\/res\.cloudinary\.com\/[\w-]+\/image\/upload\/v\d+\/[^?#,\s]+$/.test(src)) {
     thumbnail = width => src.replace('/image/upload/', '/image/upload/c_limit,w_' + width + '/q_auto/f_auto/');
   }
-  return thumbnail ? galleryWidths.map(width => thumbnail(width) + ' ' + width + 'w').join(', ') : null;
-};
+  return thumbnail ? widths.map(width => thumbnail(width) + ' ' + width + 'w').join(', ') : null;
+}
+app.locals.gallerySrcset = src => imageSrcset(src, galleryWidths);
+
+function responsiveImageAttributes(src, sizes, large = false) {
+  const srcset = imageSrcset(src, large ? storyWidths : galleryWidths);
+  if (!srcset) return '';
+  return 'srcset="' + escapeHtml(srcset) + '" sizes="' + escapeHtml(sizes) +
+    '" onerror="this.onerror = null; this.removeAttribute(\'srcset\')"';
+}
+app.locals.responsiveImageAttributes = responsiveImageAttributes;
+app.locals.articleImageSizes = articleImageSizes;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', 1);
@@ -364,8 +384,12 @@ function processInlineImages(content, files) {
 }
 function renderContent(text) {
   if (!text) return '';
-  return escapeHtml(text)
-    .replace(/\[image:([^\]]+)\]/g, '</p><img src="$1" alt="Photo from Snap & Snacks" class="inline-post-img" loading="lazy"><p>')
+  const images = [];
+  const content = text.replace(/\[image:([^\]\r\n]+)\]/g, (_, src) => {
+    images.push(src.trim());
+    return '\0image' + (images.length - 1) + '\0';
+  });
+  return escapeHtml(content)
     .replace(/^#### (.+)$/gm, '<h4 class="post-h4">$1</h4>')
     .replace(/^### (.+)$/gm, '<h3 class="post-h3">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 class="post-h2">$1</h2>')
@@ -376,16 +400,32 @@ function renderContent(text) {
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/~~(.+?)~~/g, '<del>$1</del>')
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) => '<a href="' + safeUrl(url) + '" target="_blank" rel="noopener noreferrer" class="post-link-inline">' + label + '</a>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, label, url) =>
+      url.includes('\0') ? match : '<a href="' + safeUrl(url) + '" target="_blank" rel="noopener noreferrer" class="post-link-inline">' + label + '</a>')
     .replace(/\n/g, '<br>')
-    .replace(/<br>\[image:/g, '[image:')
-    .replace(/\[image:[^\]]+\]<br>/g, '');
+    .replace(/\0image(\d+)\0/g, (_, index) => {
+      const src = images[index];
+      if (!src) return '';
+      const attributes = responsiveImageAttributes(src, articleImageSizes, true);
+      return '</p><img src="' + escapeHtml(src) + '" alt="Photo from Snap &amp; Snacks" class="inline-post-img" loading="lazy" decoding="async" ' + attributes + '><p>';
+    });
 }
 
 
 // ═══════════════════════════════════════════════════════════════════
 // PUBLIC ROUTES
 // ═══════════════════════════════════════════════════════════════════
+
+function orderGallery(photos) {
+  const position = photo => Number.isInteger(photo.displayOrder) ? photo.displayOrder : Number.MAX_SAFE_INTEGER;
+  return [...photos].sort((a, b) => position(a) - position(b) || b.id - a.id);
+}
+
+function selectHomepagePhotos(featured, newest) {
+  const picked = orderGallery(featured).slice(0, 4);
+  const ids = new Set(picked.map(photo => photo.id));
+  return picked.concat(newest.filter(photo => !ids.has(photo.id))).slice(0, 4);
+}
 
 app.get('/', async (req, res, next) => {
   try {
@@ -394,44 +434,73 @@ app.get('/', async (req, res, next) => {
       posts = await Post.find({ status: { $ne: 'draft' } }).sort({ id: -1 });
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
-      latestPhotos = await Gallery.find().sort({ id: -1 }).limit(4);
+      const [featured, newest] = await Promise.all([
+        Gallery.find({ featured: true }).lean(),
+        Gallery.find().sort({ id: -1 }).limit(4).lean()
+      ]);
+      latestPhotos = selectHomepagePhotos(featured, newest);
     } else {
       const db = readDB();
       posts = [...db.posts].filter(p => p.status !== 'draft').reverse();
       const pinned = posts.find(p => p.pinned);
       if (pinned) posts = [pinned, ...posts.filter(p => !p.pinned)];
-      latestPhotos = [...db.gallery].reverse().slice(0, 4);
+      const newest = [...db.gallery].sort((a, b) => b.id - a.id);
+      latestPhotos = selectHomepagePhotos(newest.filter(photo => photo.featured === true), newest);
     }
     res.render('home', { posts, latestPhotos });
   } catch (err) { next(err); }
 });
 
-app.get('/blog', async (req, res, next) => {
+async function renderBlog(req, res, next, topic = null) {
   try {
-    const { category, search } = req.query;
-    let posts, categories;
-    if (USE_MONGO) {
-      let query = { status: { $ne: 'draft' } };
-      if (category) query.category = category;
-      posts = await Post.find(query).sort({ id: -1 });
-      if (search) posts = posts.filter(p =>
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.content.toLowerCase().includes(search.toLowerCase())
-      );
-      const allPosts = await Post.find({ status: { $ne: 'draft' } });
-      categories = [...new Set(allPosts.map(p => p.category))];
-    } else {
-      const db = readDB();
-      posts = [...db.posts].filter(p => p.status !== 'draft').reverse();
-      if (category) posts = posts.filter(p => p.category === category);
-      if (search) posts = posts.filter(p =>
-        p.title.toLowerCase().includes(search.toLowerCase()) ||
-        p.content.toLowerCase().includes(search.toLowerCase())
-      );
-      categories = [...new Set(db.posts.filter(p => p.status !== 'draft').map(p => p.category))];
+    const category = topic?.name || cleanText(req.query.category, 50);
+    const search = cleanText(req.query.search, 200);
+    const terms = search.toLowerCase().split(/\s+/).filter(Boolean);
+    const published = USE_MONGO
+      ? await Post.find(category ? { status: { $ne: 'draft' }, category } : { status: { $ne: 'draft' } }).sort({ id: -1 })
+      : readDB().posts.filter(post => post.status !== 'draft').reverse();
+    const categories = category && USE_MONGO
+      ? await Post.distinct('category', { status: { $ne: 'draft' } })
+      : [...new Set(published.map(post => post.category))];
+    const posts = published.filter(post => {
+      if (category && post.category !== category) return false;
+      if (!terms.length) return true;
+      const searchable = [post.title, post.content, ...(post.tags || [])].join(' ').toLowerCase();
+      return terms.every(term => searchable.includes(term));
+    });
+    const blogFilterUrl = selected => {
+      const params = new URLSearchParams();
+      if (selected) params.set('category', selected);
+      if (search) params.set('search', search);
+      return params.size ? '/blog?' + params : '/blog';
+    };
+    let featuredPost = null;
+    let popularTags = [];
+    if (topic && !search) {
+      featuredPost = posts.find(post => post.pinned) || posts[0] || null;
+      const counts = new Map();
+      for (const post of posts) {
+        const tags = new Map((post.tags || []).filter(tag => typeof tag === 'string' && tag.trim())
+          .map(tag => [tag.trim().toLowerCase(), tag.trim()]));
+        for (const [key, label] of tags) {
+          const entry = counts.get(key);
+          if (entry) entry.count++;
+          else counts.set(key, { label, count: 1 });
+        }
+      }
+      popularTags = [...counts.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, 8);
     }
-    res.render('blog', { posts, categories, activeCategory: category || '', search: search || '' });
+    res.render('blog', {
+      posts, categories, activeCategory: category, search, blogFilterUrl, topic, featuredPost, popularTags
+    });
   } catch (err) { next(err); }
+}
+
+app.get('/blog', (req, res, next) => renderBlog(req, res, next));
+app.get('/topics/:slug', (req, res, next) => {
+  const topic = topics.find(item => item.slug === req.params.slug);
+  if (!topic) return next();
+  return renderBlog(req, res, next, topic);
 });
 
 function postPath(slug) {
@@ -448,16 +517,30 @@ function renderPost(res, post, options) {
   });
 }
 
+function relatedPosts(post, candidates) {
+  const normalizeTags = tags => new Set((tags || []).map(tag => tag.trim().toLowerCase()).filter(Boolean));
+  const tags = normalizeTags(post.tags);
+  return candidates
+    .filter(candidate => candidate.slug !== post.slug)
+    .map(candidate => ({
+      post: candidate,
+      shared: [...normalizeTags(candidate.tags)].filter(tag => tags.has(tag)).length,
+      sameCategory: candidate.category === post.category
+    }))
+    .sort((a, b) => b.shared - a.shared || Number(b.sameCategory) - Number(a.sameCategory) || b.post.id - a.post.id)
+    .map(candidate => candidate.post);
+}
+
 app.get('/post/:slug', async (req, res, next) => {
   try {
-    let post, related, generalRelated, categoryCounts;
+    let post, candidates, categoryCounts;
     if (USE_MONGO) {
       post = await Post.findOne({ slug: req.params.slug, status: { $ne: 'draft' } });
       if (!post) return res.status(404).render('404');
       post.views = (post.views || 0) + 1;
       await post.save();
-      related = await Post.find({ slug: { $ne: post.slug }, category: post.category, status: { $ne: 'draft' } }).limit(3);
-      generalRelated = await Post.find({ slug: { $ne: post.slug }, status: { $ne: 'draft' } }).sort({ id: -1 }).limit(4);
+      candidates = await Post.find({ slug: { $ne: post.slug }, status: { $ne: 'draft' } })
+        .select('id slug title category tags image date').lean();
       categoryCounts = {
         Travel: await Post.countDocuments({ category: 'Travel', status: { $ne: 'draft' } }),
         Food: await Post.countDocuments({ category: 'Food', status: { $ne: 'draft' } }),
@@ -470,16 +553,17 @@ app.get('/post/:slug', async (req, res, next) => {
       if (!post.comments) post.comments = [];
       post.views = (post.views || 0) + 1;
       writeDB(db);
-      related = db.posts.filter(p => p.slug !== post.slug && p.category === post.category && p.status !== 'draft').slice(0, 3);
-      generalRelated = db.posts.filter(p => p.slug !== post.slug && p.status !== 'draft').reverse().slice(0, 4);
+      candidates = db.posts.filter(p => p.status !== 'draft');
       categoryCounts = {
         Travel: db.posts.filter(p => p.category === 'Travel' && p.status !== 'draft').length,
         Food: db.posts.filter(p => p.category === 'Food' && p.status !== 'draft').length,
         Lifestyle: db.posts.filter(p => p.category === 'Lifestyle' && p.status !== 'draft').length
       };
     }
+    const recommendations = relatedPosts(post, candidates);
     renderPost(res, post, {
-      related, generalRelated, categoryCounts, pending: req.query.pending === '1',
+      related: recommendations.filter(candidate => candidate.category === post.category).slice(0, 2),
+      generalRelated: recommendations.slice(0, 4), categoryCounts, pending: req.query.pending === '1',
       commentError: req.query.commentError === 'invalid'
         ? 'Enter a name and comment within the length limits, and use a valid email address if you provide one.'
         : req.query.commentError === 'unavailable' ? 'Your comment could not be saved. Please try again.' : null
@@ -537,12 +621,13 @@ app.post('/post/:slug/comment', commentLimiter, csrfProtection, async (req, res)
   }
 });
 
-app.get('/gallery-thumbnails/:width/:filename', async (req, res, next) => {
+async function serveThumbnail(req, res, next) {
   const { width, filename } = req.params;
-  if (!galleryWidths.some(size => String(size) === width) || !galleryFilename.test(filename)) return next();
-  const originalUrl = '/gallery-uploads/' + encodeURIComponent(filename);
+  if (!storyWidths.some(size => String(size) === width) || !imageFilename.test(filename)) return next();
+  const directory = req.route.path.startsWith('/post-thumbnails/') ? 'uploads' : 'gallery-uploads';
+  const originalUrl = '/' + directory + '/' + encodeURIComponent(filename);
   if (!sharp) return res.redirect(originalUrl);
-  const filePath = path.join(galleryDirectory, filename);
+  const filePath = path.join(__dirname, 'public', directory, filename);
   try {
     await fs.promises.access(filePath, fs.constants.R_OK);
   } catch (err) {
@@ -551,20 +636,23 @@ app.get('/gallery-thumbnails/:width/:filename', async (req, res, next) => {
   }
   let image;
   try {
-    image = await sharp(filePath).rotate().resize({ width: Number(width), withoutEnlargement: true })
-      .webp({ quality: 80 }).toBuffer();
+    const source = sharp(filePath);
+    if ((await source.metadata()).pages > 1) return res.redirect(originalUrl);
+    image = await source.rotate().resize({ width: Number(width), withoutEnlargement: true }).webp({ quality: 80 }).toBuffer();
   } catch {
     return res.redirect(originalUrl);
   }
   res.set('Cache-Control', 'public, max-age=86400').type('webp').send(image);
-});
+}
+app.get('/post-thumbnails/:width/:filename', serveThumbnail);
+app.get('/gallery-thumbnails/:width/:filename', serveThumbnail);
 
 app.get('/gallery', async (req, res, next) => {
   try {
     const photos = USE_MONGO
       ? await Gallery.find().sort({ id: -1 })
       : [...readDB().gallery].reverse();
-    res.render('gallery', { photos });
+    res.render('gallery', { photos: orderGallery(photos) });
   } catch (err) { next(err); }
 });
 
@@ -612,11 +700,10 @@ app.post('/newsletter', newsletterLimiter, csrfProtection, async (req, res) => {
   if (!isValidEmail(email)) return respond(400, 'Enter a valid email address.');
   try {
     if (USE_MONGO) {
-      const exists = await Message.findOne({ email: email.trim(), name: 'newsletter' });
+      const exists = await Message.findOne({ ...newsletterRecord, email });
       if (!exists) {
         await Message.create({
-          id: Date.now(), name: 'newsletter',
-          email: email.trim(), message: 'Newsletter subscriber',
+          id: Date.now(), ...newsletterRecord, email,
           date: formatDate(new Date()), read: false
         });
         sendNotification(
@@ -640,16 +727,44 @@ app.post('/newsletter', newsletterLimiter, csrfProtection, async (req, res) => {
   }
 });
 
+async function newsletterSubscribers() {
+  const emails = USE_MONGO
+    ? await Message.distinct('email', newsletterRecord)
+    : (readDB().newsletter || []);
+  return [...new Set(emails.filter(email => typeof email === 'string' && email.trim()))].sort();
+}
+
 app.get('/admin/newsletter', requireLogin, async (req, res) => {
-  let subscribers;
+  res.set('Cache-Control', 'private, no-store');
+  res.render('admin/newsletter', { subscribers: await newsletterSubscribers(), removed: req.query.removed === '1' });
+});
+
+app.get('/admin/newsletter/export', requireLogin, async (req, res) => {
+  const subscribers = await newsletterSubscribers();
+  const rows = subscribers.map(email => {
+    const cell = /^[\s\uFEFF]*[=+@-]|^[\t\r\n]/.test(email) ? "'" + email : email;
+    return '"' + cell.replace(/"/g, '""') + '"';
+  });
+  res.set('Cache-Control', 'private, no-store');
+  res.attachment('snap-and-snacks-subscribers.csv').send(['Email', ...rows].join('\r\n') + '\r\n');
+});
+
+app.post('/admin/newsletter/remove', requireLogin, async (req, res) => {
+  const email = req.body?.email;
+  if (typeof email !== 'string' || !email.trim() || email.length > 254) {
+    return res.status(400).send('Choose a subscriber to remove.');
+  }
+  let removed;
   if (USE_MONGO) {
-    const msgs = await Message.find({ name: 'newsletter' });
-    subscribers = msgs.map(m => m.email);
+    removed = (await Message.deleteMany({ ...newsletterRecord, email })).deletedCount > 0;
   } else {
     const db = readDB();
-    subscribers = db.newsletter || [];
+    const subscribers = db.newsletter || [];
+    db.newsletter = subscribers.filter(subscriber => subscriber !== email);
+    removed = subscribers.length !== db.newsletter.length;
+    if (removed) writeDB(db);
   }
-  res.render('admin/newsletter', { subscribers });
+  res.redirect(303, removed ? '/admin/newsletter?removed=1' : '/admin/newsletter');
 });
 
 app.get('/privacy', (req, res) => res.render('privacy'));
@@ -744,11 +859,23 @@ app.get('/admin', requireLogin, async (req, res, next) => {
       photoCount = db.gallery.length;
       unreadMessages = (db.messages || []).filter(m => !m.read).length;
     }
-    res.render('admin/dashboard', { posts, drafts, photoCount, unreadMessages });
+    const editorSave = req.session.editorSave;
+    delete req.session.editorSave;
+    res.render('admin/dashboard', { posts, drafts, photoCount, unreadMessages, editorSave });
   } catch (err) { next(err); }
 });
 
 app.get('/admin/new', requireLogin, (req, res) => res.render('admin/form', { post: null, error: null }));
+
+function finishEditorSave(req, res, editorId) {
+  const revision = cleanText(req.body.backupRevision, 80);
+  req.session.editorSave = {
+    editorId,
+    revision: /^[a-z0-9-]+$/i.test(revision) ? revision : '',
+    draft: req.body.action === 'draft'
+  };
+  res.redirect(303, '/admin');
+}
 
 app.get('/admin/preview/:id', requireLogin, async (req, res, next) => {
   res.set({
@@ -773,7 +900,7 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
   const action = req.body.action;
   const title = cleanText(req.body.title, 160);
   let content = cleanText(req.body.content, 100000);
-    const category = cleanText(req.body.category, 50);
+  const category = cleanText(req.body.category, 50);
   const tags = cleanText(req.body.tags, 500);
   const metaTitle = cleanText(req.body.metaTitle, 70);
   const metaDescription = cleanText(req.body.metaDescription, 160);
@@ -803,7 +930,7 @@ app.post('/admin/new', requireLogin, uploadPost.any(), verifyImageUploads, async
       db.posts.push(postData);
       writeDB(db);
     }
-    res.redirect('/admin');
+    finishEditorSave(req, res, 'new');
   } catch (err) {
     if (err.code === 'IMAGE_UPLOAD_FAILED') {
       return res.status(502).render('admin/form', { post: null, error: err.message });
@@ -830,8 +957,12 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
   const tags = cleanText(req.body.tags, 500);
   const metaTitle = cleanText(req.body.metaTitle, 70);
   const metaDescription = cleanText(req.body.metaDescription, 160);
+  const files = req.files || [];
+  if (!title || !content) {
+    await Promise.all(files.map(file => removeUploadFile(file.path)));
+    return res.status(400).send('Title and content are required. Go back to continue editing.');
+  }
   try {
-    const files = req.files || [];
     await uploadImages(files, 'snapandsnacks-posts', 'uploads');
     const featuredFile = files.find(f => f.fieldname === 'image');
     const inlineFiles  = files.filter(f => f.fieldname !== 'image');
@@ -863,7 +994,7 @@ app.post('/admin/edit/:id', requireLogin, uploadPost.any(), verifyImageUploads, 
       if (featuredFile) post.image = featuredFile.uploadedSrc;
       writeDB(db);
     }
-    res.redirect('/admin');
+    finishEditorSave(req, res, String(Number(req.params.id)));
   } catch (err) {
     if (err.code === 'IMAGE_UPLOAD_FAILED') return next(err);
     res.redirect('/admin');
@@ -982,11 +1113,12 @@ app.get('/admin/gallery', requireLogin, async (req, res) => {
   const photos = USE_MONGO
     ? await Gallery.find().sort({ id: -1 })
     : [...readDB().gallery].reverse();
-  res.render('admin/gallery', { photos });
+  res.render('admin/gallery', { photos: orderGallery(photos), saved: req.query.saved === '1' });
 });
 
 app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20), verifyImageUploads, async (req, res) => {
-  const captions = req.body.captions;
+  const captions = req.body?.captions;
+  const captionAt = index => cleanText(Array.isArray(captions) ? captions[index] : captions, 250);
   await uploadImages(req.files, 'snapandsnacks-gallery', 'gallery-uploads');
   const uploaded = req.files.map(file => file.uploadedSrc);
 
@@ -995,7 +1127,7 @@ app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20
       await Gallery.create({
         id: Date.now() + i,
         src: uploaded[i],
-        caption: Array.isArray(captions) ? (captions[i] || '') : (captions || ''),
+        caption: captionAt(i),
         date: formatDate(new Date())
       });
     }
@@ -1005,7 +1137,7 @@ app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20
       db.gallery.push({
         id: Date.now() + i,
         src: src,
-        caption: Array.isArray(captions) ? (captions[i] || '') : (captions || ''),
+        caption: captionAt(i),
         date: formatDate(new Date())
       });
     });
@@ -1015,15 +1147,25 @@ app.post('/admin/gallery/upload', requireLogin, uploadGallery.array('photos', 20
 });
 
 app.post('/admin/gallery/edit/:id', requireLogin, async (req, res) => {
-  const caption = cleanText(req.body.caption, 250);
+  const fields = req.body || {};
+  const order = cleanText(fields.displayOrder, 8);
+  const id = Number(req.params.id);
+  if (!Number.isSafeInteger(id) || (order && !/^[1-9]\d{0,5}$/.test(order))) {
+    return res.status(400).send('Enter a whole display order between 1 and 999999, or leave it blank.');
+  }
+  const details = { caption: cleanText(fields.caption, 250) };
+  if (Object.hasOwn(fields, 'altText')) details.altText = cleanText(fields.altText, 250);
+  if (Object.hasOwn(fields, 'displayOrder')) details.displayOrder = order ? Number(order) : null;
+  if (Object.hasOwn(fields, 'featured') || Object.hasOwn(fields, 'displayOrder')) details.featured = fields.featured === 'yes';
+  let photo;
   if (USE_MONGO) {
-    await Gallery.findOneAndUpdate({ id: Number(req.params.id) }, { caption });
+    photo = await Gallery.findOneAndUpdate({ id }, { $set: details });
   } else {
     const db = readDB();
-    const photo = db.gallery.find(p => p.id === Number(req.params.id));
-    if (photo) { photo.caption = caption; writeDB(db); }
+    photo = db.gallery.find(p => p.id === id);
+    if (photo) { Object.assign(photo, details); writeDB(db); }
   }
-  res.redirect('/admin/gallery');
+  res.redirect(303, photo ? '/admin/gallery?saved=1' : '/admin/gallery');
 });
 
 app.post('/admin/gallery/delete/:id', requireLogin, async (req, res) => {
@@ -1104,7 +1246,7 @@ app.get('/sitemap.xml', async (req, res) => {
   const posts = USE_MONGO
     ? await Post.find({ status: { $ne: 'draft' } }).select('slug')
     : readDB().posts.filter(p => p.status !== 'draft');
-  const paths = ['/', '/blog', '/gallery', '/about', '/contact', '/tags', '/archive'];
+  const paths = ['/', '/blog', '/gallery', '/about', '/contact', '/tags', '/archive', ...topics.map(topic => '/topics/' + topic.slug)];
   const urls = paths.concat(posts.filter(post => post.slug).map(post => postPath(post.slug)));
   const entries = urls.map(url => '<url><loc>' + escapeHtml(siteOrigin + url) + '</loc></url>').join('\n');
   res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>

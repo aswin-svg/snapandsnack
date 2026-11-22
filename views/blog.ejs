@@ -5,13 +5,16 @@
   <meta charset="UTF-8">
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog — Snap & Snacks</title>
-  <link rel="canonical" href="<%= siteUrl('/blog') %>">
-  <meta name="description" content="Browse all travel, food and lifestyle posts on Snap & Snack. Real stories from real trips.">
+  <% const pageTitle = (topic?.name || 'Blog') + ' — Snap & Snacks'; %>
+  <% const pagePath = topic ? '/topics/' + topic.slug : '/blog'; %>
+  <% const description = topic?.description || 'Browse travel, food, and lifestyle stories on Snap & Snacks.'; %>
+  <title><%= pageTitle %></title>
+  <link rel="canonical" href="<%= siteUrl(pagePath) %>">
+  <meta name="description" content="<%= description %>">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Blog — Snap & Snack">
-  <meta property="og:description" content="Browse all travel, food and lifestyle posts on Snap & Snack.">
-  <meta property="og:url" content="<%= siteUrl('/blog') %>">
+  <meta property="og:title" content="<%= pageTitle %>">
+  <meta property="og:description" content="<%= description %>">
+  <meta property="og:url" content="<%= siteUrl(pagePath) %>">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/style.css">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -22,33 +25,68 @@
 
   <div class="container">
     <div class="blog-header">
-      <h1>All Posts</h1>
+      <h1><%= topic?.name || 'All Posts' %></h1>
+      <% if (topic) { %><p><%= topic.description %></p><% } %>
       <p style="color:var(--muted);font-weight:300"><%= posts.length %> article<%= posts.length !== 1 ? 's' : '' %></p>
     </div>
 
     <div class="blog-filters">
-      <a href="/blog" class="filter-btn <%= activeCategory === '' && search === '' ? 'active' : '' %>">All</a>
+      <% if (topic) { %>
+        <a href="/blog" class="filter-btn">All stories</a>
+        <% for (const entry of topics) { %>
+          <a href="/topics/<%= entry.slug %>" class="filter-btn <%= entry === topic ? 'active' : '' %>"><%= entry.name %></a>
+        <% } %>
+      <% } else { %>
+      <a href="<%= blogFilterUrl('') %>" class="filter-btn <%= activeCategory === '' ? 'active' : '' %>">All categories</a>
       <% categories.forEach(cat => { %>
-        <a href="/blog?category=<%= cat %>" class="filter-btn <%= activeCategory === cat ? 'active' : '' %>"><%= cat %></a>
+        <a href="<%= blogFilterUrl(cat) %>" class="filter-btn <%= activeCategory === cat ? 'active' : '' %>"><%= cat %></a>
       <% }) %>
-      <form class="search-box" method="GET" action="/blog">
-        <input type="text" name="search" placeholder="Search posts..." value="<%= search %>">
+      <% } %>
+      <form class="search-box" method="GET" action="<%= pagePath %>">
+        <% if (activeCategory && !topic) { %><input type="hidden" name="category" value="<%= activeCategory %>"><% } %>
+        <input type="search" name="search" aria-label="Search titles, stories, and tags" placeholder="Search stories or tags" maxlength="200" value="<%= search %>">
         <button type="submit">Search</button>
       </form>
+      <% if (search || (activeCategory && !topic)) { %><a href="<%= pagePath %>" class="filter-btn">Clear filters</a><% } %>
     </div>
+
+    <% if (featuredPost) { %>
+      <article class="featured-card topic-featured">
+        <% if (featuredPost.image) { %>
+          <img class="featured-img" src="<%= featuredPost.image %>" alt="<%= featuredPost.title %>"
+            <%- responsiveImageAttributes(featuredPost.image, '(max-width: 768px) calc(100vw - 3rem), 520px', true) %>>
+        <% } else { %>
+          <div class="featured-img-placeholder" aria-hidden="true">📷</div>
+        <% } %>
+        <div class="featured-body">
+          <p class="featured-label">Featured story</p>
+          <h2><a href="/post/<%= encodeURIComponent(featuredPost.slug) %>"><%= featuredPost.title %></a></h2>
+          <p class="featured-excerpt"><%= featuredPost.content.replace(/\[image:[^\]]*\]/g, '').trim().slice(0, 160) %></p>
+          <a class="read-btn" href="/post/<%= encodeURIComponent(featuredPost.slug) %>">Read story →</a>
+        </div>
+      </article>
+    <% } %>
+    <% if (popularTags.length) { %>
+      <section class="topic-tags" aria-labelledby="topic-tags-title">
+        <h2 id="topic-tags-title">Popular tags</h2>
+        <div class="post-tags">
+          <% for (const tag of popularTags) { %><a class="tag" href="<%= pagePath %>?search=<%= encodeURIComponent(tag.label) %>">#<%= tag.label %></a><% } %>
+        </div>
+      </section>
+    <% } %>
 
     <% if (posts.length === 0) { %>
       <div class="empty-state">
         <div class="empty-icon">🔍</div>
         <p>No posts found<% if (search) { %> for "<%= search %>"<% } %><% if (activeCategory) { %> in <%= activeCategory %><% } %>.</p>
-        <a href="/blog" class="btn btn-outline">Clear filters</a>
       </div>
-    <% } else { %>
+    <% } else if (posts.some(post => post !== featuredPost)) { %>
       <div class="posts-grid" style="padding-bottom:4rem">
-        <% posts.forEach(post => { %>
+        <% posts.filter(post => post !== featuredPost).forEach(post => { %>
           <article class="post-card">
             <% if (post.image) { %>
-              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img" loading="lazy"></a>
+              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img" loading="lazy" decoding="async"
+                <%- responsiveImageAttributes(post.image, '(max-width: 550px) calc(100vw - 3rem), (max-width: 1100px) 45vw, 350px') %>></a>
             <% } else { %>
               <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
             <% } %>
@@ -58,7 +96,7 @@
               <p class="post-card-excerpt"><%= post.content.substring(0, 130) %>...</p>
               <% if (post.tags.length > 0) { %>
                 <div class="post-tags" style="margin-bottom:0.75rem">
-                  <% post.tags.slice(0,3).forEach(t => { %><span class="tag">#<%= t %></span><% }) %>
+                  <% post.tags.slice(0,3).forEach(t => { %><a href="/tags/<%= encodeURIComponent(t) %>" class="tag">#<%= t %></a><% }) %>
                 </div>
               <% } %>
               <div class="post-card-footer">

@@ -32,6 +32,12 @@
       </div>
     </header>
 
+    <% if (editorSave) { %>
+      <p class="studio-save-notice" role="status" data-editor-saved="<%= editorSave.editorId %>" data-revision="<%= editorSave.revision %>">
+        <%= editorSave.draft ? 'Draft saved to the site.' : 'Post published.' %>
+      </p>
+    <% } %>
+
     <dl class="studio-stats">
       <div><dt>Published posts</dt><dd><%= posts.length %></dd></div>
       <div><dt>Drafts</dt><dd><%= drafts.length %></dd></div>
@@ -136,5 +142,6 @@
       </section>
     <% } %>
   </main>
+  <% if (editorSave?.revision) { %><script src="/js/post-editor.js" defer></script><% } %>
 </body>
 </html>

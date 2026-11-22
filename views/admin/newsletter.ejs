@@ -22,7 +22,12 @@
   </nav>
 
   <div class="admin-main">
-    <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:1.5rem">📧 Newsletter Subscribers</h1>
+    <header class="subscriber-header">
+      <h1>Newsletter subscribers</h1>
+      <% if (subscribers.length) { %><a href="/admin/newsletter/export" class="btn btn-outline">Export CSV</a><% } %>
+    </header>
+
+    <% if (removed) { %><p class="alert" role="status">Subscriber removed.</p><% } %>
 
     <div class="dashboard-stats" style="grid-template-columns:repeat(1,1fr);max-width:300px">
       <div class="stat-card">
@@ -37,18 +42,18 @@
         <p>No subscribers yet.</p>
       </div>
     <% } else { %>
-      <div class="admin-table" style="margin-top:1.5rem">
-        <div class="table-head" style="grid-template-columns:1fr auto">
-          <span>Email</span>
-          <span>Status</span>
-        </div>
-        <% subscribers.forEach((email, i) => { %>
-          <div class="table-row" style="grid-template-columns:1fr auto">
-            <span style="font-size:0.95rem;color:var(--ink)">📧 <%= email %></span>
-            <span style="font-size:0.8rem;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px">Active</span>
-          </div>
-        <% }) %>
-      </div>
+      <ul class="admin-table subscriber-list">
+        <% for (const email of subscribers) { %>
+          <li class="subscriber-row">
+            <span><%= email %></span>
+            <form method="POST" action="/admin/newsletter/remove" onsubmit="return confirm('Remove this email from the newsletter list?')">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="email" value="<%= email %>">
+              <button type="submit" class="btn btn-danger btn-sm" aria-label="Remove <%= email %>">Remove</button>
+            </form>
+          </li>
+        <% } %>
+      </ul>
     <% } %>
   </div>
 
