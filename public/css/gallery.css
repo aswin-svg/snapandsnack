@@ -74,7 +74,7 @@
 .grid__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(180, 100, 80, 0.88);
+  background: rgba(36, 94, 83, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -105,7 +105,7 @@
 
 .view-btn:hover {
   background: #fff;
-  color: #c9622f;
+  color: var(--accent);
   transform: scale(1.05);
 }
 

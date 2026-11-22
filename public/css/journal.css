@@ -37,12 +37,12 @@
   border: 0;
   border-radius: 2rem;
   padding: .7rem 1.15rem;
-  background: #126476;
+  background: var(--accent);
   color: #fff;
   font: 700 .9rem/1.4 var(--sans);
   cursor: pointer;
 }
-.journal-button:hover { background: #0c4d5c; }
+.journal-button:hover { background: var(--accent-hover, var(--accent)); }
 .journal-search { width: min(100%, 415px); display: flex; gap: .4rem; margin-top: 1.3rem; padding: .35rem; border-radius: 2rem; background: #fff; }
 .journal-search input[type=search] { min-width: 0; flex: 1; border: 0; border-radius: 2rem; padding: .45rem .65rem; color: #173842; background: #fff; font: inherit; font-size: .9rem; }
 .journal-featured-link { display: inline-flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; color: #e5f5f6; font-size: .83rem; text-decoration: underline; text-underline-offset: .2em; }

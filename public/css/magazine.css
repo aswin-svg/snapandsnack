@@ -1,0 +1,118 @@
+.magazine {
+  --magazine-card: var(--warm-white);
+  --magazine-text: var(--ink);
+  --magazine-muted: var(--muted);
+  --magazine-accent: var(--accent-text);
+  --magazine-border: var(--border);
+}
+
+.magazine-wrap {
+  width: min(1196px, calc(100% - 3.5rem));
+  margin: clamp(1.25rem, 3vw, 2.5rem) auto 4rem;
+}
+
+.magazine-topic-cover {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: end;
+  background: #23423f;
+  min-height: clamp(240px, 30vw, 365px);
+  overflow: hidden;
+  border-radius: 1rem;
+  color: #fff;
+}
+
+.magazine-topic-cover img, .magazine-topic-cover::after {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.magazine-topic-cover img { z-index: -2; object-fit: cover; }
+.magazine-topic-cover::after {
+  content: '';
+  z-index: -1;
+  background: linear-gradient(90deg, #172e2cde, #172e2c70 48%, transparent 86%),
+    linear-gradient(0deg, #142a28aa, transparent 65%);
+}
+.magazine-topic-cover > div { padding: clamp(1.35rem, 4vw, 3.25rem); }
+.magazine-topic-cover h1, .magazine-article .post-header h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.75rem, 7vw, 5rem);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -.045em;
+  overflow-wrap: anywhere;
+}
+.magazine-topic-cover p { max-width: 36ch; margin-top: .6rem; color: #eef4ec; }
+
+.magazine .blog-filters { margin: 1.25rem 0 1.5rem; }
+.magazine .filter-btn, .magazine .tag {
+  border-color: var(--magazine-border);
+  border-radius: 999px;
+  color: var(--magazine-accent);
+}
+.magazine .filter-btn.active, .magazine .filter-btn:hover, .magazine .search-box button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.magazine .topic-tags { margin-bottom: 1.5rem; }
+.magazine .tag:hover { text-decoration: underline; }
+.magazine .topic-tags .post-tags { margin: .5rem 0 0; }
+.magazine-section-title { font: 400 clamp(1.65rem, 3vw, 2.45rem)/1.2 var(--serif); margin-bottom: .85rem; }
+.magazine-kicker {
+  color: var(--magazine-accent);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.magazine-kicker a:hover, .magazine .post-card h3 a:hover { text-decoration: underline; }
+.magazine .magazine-cards { grid-template-columns: 1.25fr 1fr 1fr; gap: clamp(.75rem, 2vw, 1.35rem); }
+.magazine .post-card { min-width: 0; background: var(--magazine-card); border-color: var(--magazine-border); }
+.magazine .post-card-img, .magazine .post-card-img-placeholder { height: clamp(145px, 18vw, 220px); }
+.magazine .post-card h3 { font-weight: 400; overflow-wrap: anywhere; }
+.magazine .post-card-excerpt, .magazine .post-date { color: var(--magazine-muted); }
+.magazine .post-link { color: var(--magazine-accent); }
+
+.magazine-article .post-layout-container { display: block; max-width: none; padding: 0; }
+.magazine-article .post-header { max-width: 900px; margin-inline: auto; padding: clamp(1.4rem, 4vw, 3rem) 0 1.6rem; }
+.magazine-article .post-header h1 { margin: .45rem 0 .85rem; }
+.magazine-dek { color: var(--magazine-muted); max-width: 52ch; margin: 0 auto .85rem; }
+.magazine-article .post-meta-row { gap: .75rem; color: var(--magazine-muted); font-size: .82rem; }
+.magazine-article .post-meta-row > * + *::before { content: '·'; margin-right: .75rem; }
+.magazine-article .post-header .post-tags { margin: .75rem 0 0; }
+.magazine-article .post-hero-img { height: clamp(240px, 39vw, 500px); box-shadow: none; margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+.magazine-article .post-hero-img:hover { transform: none; }
+.magazine-article .post-body, .magazine-article .comments-section, .magazine-article .share-row { width: min(100%, 43rem); margin-inline: auto; }
+.magazine-article .post-body {
+  color: var(--magazine-text);
+  font: 400 clamp(1.05rem, 2vw, 1.23rem)/1.78 var(--serif);
+  overflow-wrap: anywhere;
+}
+html.dark .magazine-article .post-body { color: var(--magazine-text); }
+.magazine-article .related-section { padding: 1.35rem 0; margin-top: 2rem; border-color: var(--magazine-border); }
+.magazine-article .related-section .magazine-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.magazine-article .post-sidebar {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+.magazine-article .sidebar-box { min-width: 0; }
+
+@media (max-width: 950px) {
+  .magazine .magazine-cards, .magazine-article .related-section .magazine-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .magazine-wrap { width: calc(100% - 2rem); }
+  .magazine .search-box { width: 100%; margin-left: 0; }
+  .magazine .search-box input { flex: 1; min-width: 0; width: auto; }
+  .magazine .magazine-cards, .magazine-article .related-section .magazine-cards { grid-template-columns: minmax(0, 1fr); }
+  .magazine .post-card-img, .magazine .post-card-img-placeholder { height: clamp(160px, 55vw, 245px); }
+  .magazine-topic-cover::after { background: linear-gradient(0deg, #142a28e6, #142a284d 72%, transparent); }
+}
