@@ -20,6 +20,7 @@
 .studio-main { width: min(100%, 1320px); margin-inline: auto; padding: clamp(1rem, 4vw, 3.5rem); }
 .studio-header { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
 .studio-kicker { color: #875638; font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
+.studio-save-notice { padding: .6rem .85rem; margin-bottom: 1rem; border: 1px solid #a6c3aa; border-radius: .5rem; background: #f0f7ee; color: #274c2e; }
 .studio h1 { font: 400 clamp(2.3rem, 4vw, 3.4rem)/1.15 var(--serif); letter-spacing: -.035em; }
 .studio-actions { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
 .studio .btn { white-space: nowrap; }

@@ -41,7 +41,8 @@
               <% posts.forEach(post => { %>
                 <a href="/post/<%= post.slug %>" class="archive-post-item">
                   <% if (post.image) { %>
-                    <img src="<%= post.image %>" alt="<%= post.title %>">
+                    <img src="<%= post.image %>" alt="<%= post.title %>" loading="lazy" decoding="async"
+                      <%- responsiveImageAttributes(post.image, '64px') %>>
                   <% } else { %>
                     <div class="archive-post-placeholder">📷</div>
                   <% } %>

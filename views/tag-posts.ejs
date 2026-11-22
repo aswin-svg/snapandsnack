@@ -35,7 +35,8 @@
         <% posts.forEach(post => { %>
           <article class="post-card">
             <% if (post.image) { %>
-              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img"></a>
+              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img" loading="lazy" decoding="async"
+                <%- responsiveImageAttributes(post.image, '(max-width: 550px) calc(100vw - 3rem), (max-width: 1100px) 45vw, 350px') %>></a>
             <% } else { %>
               <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
             <% } %>
