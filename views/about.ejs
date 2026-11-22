@@ -7,13 +7,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>About — Snap & Snacks</title>
   <link rel="canonical" href="<%= siteUrl('/about') %>">
-  <meta name="description" content="Hey I'm Aswin — a traveller who eats first and asks questions later. Read my story.">
+  <meta name="description" content="Travel, good food, and photographs from the road. Get to know the author of Snap &amp; Snacks.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="About Anish — Snap & Snack">
-  <meta property="og:description" content="Hey I'm Anish — a traveller who eats first and asks questions later.">
+  <meta property="og:title" content="About — Snap &amp; Snacks">
+  <meta property="og:description" content="Travel, good food, and photographs from the road. Get to know the author of Snap &amp; Snacks.">
   <meta property="og:url" content="<%= siteUrl('/about') %>">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/info-pages.css">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 
@@ -22,72 +23,51 @@
 
   <%- include('partials/nav', { active: 'about' }) %>
 
-  <div class="container-sm">
-
-    <div class="about-page-header">
-      <img src="/aswin.jpg" alt="Anish" class="about-page-avatar" style="object-fit:cover">
-      <h1>Hey, I'm NonChalant!</h1>
-      <p class="about-page-sub">Traveller · Food lover · Photographer</p>
-    </div>
-
-    <div class="about-page-body">
-
-      <div class="about-block">
-        <h2>My story</h2>
-        <p>I'm a traveller who believes the best way to understand a place is through its food. I pick up my camera, hop on a plane (or a bus, or a tuk-tuk), and go looking for the real story behind every destination.</p>
-        <p>This blog started as a personal diary and turned into something I actually share with the world. Every post here is a real experience — no filters, no pretending everything was perfect.</p>
-      </div>
-
-      <div class="about-block">
-        <h2>What I do</h2>
-        <div class="about-cards">
-          <div class="about-feat">
-            <span>✈️</span>
-            <div>
-              <strong>Travel</strong>
-              <p>I go wherever curiosity takes me — mountains, cities, beaches, street markets.</p>
-            </div>
-          </div>
-          <div class="about-feat">
-            <span>🍜</span>
-            <div>
-              <strong>Eat everything</strong>
-              <p>Street food, local spots, hole-in-the-wall places. If locals eat there, I'm in.</p>
-            </div>
-          </div>
-          <div class="about-feat">
-            <span>📷</span>
-            <div>
-              <strong>Photograph moments</strong>
-              <p>I try to capture the feeling of a place, not just how it looks.</p>
-            </div>
-          </div>
-          <div class="about-feat">
-            <span>✍️</span>
-            <div>
-              <strong>Write honestly</strong>
-              <p>Real stories — what went wrong, what surprised me, what I'd do again.</p>
-            </div>
-          </div>
+  <main class="info-page">
+    <section class="about-intro" aria-labelledby="about-title">
+      <div class="about-intro-copy">
+        <p class="info-kicker">About Snap &amp; Snacks</p>
+        <h1 id="about-title">Hey, I’m NonChalant.</h1>
+        <p>I’m a traveller who believes the best way to understand a place is through its food.</p>
+        <p>This blog started as a personal diary. It’s where I share the places, meals, and moments I want to remember.</p>
+        <div class="info-actions">
+          <a href="/blog" class="btn btn-accent">Read the stories ↗</a>
+          <a href="/contact" class="info-text-link">Get in touch</a>
         </div>
       </div>
+      <img src="/aswin.jpg" alt="Portrait of NonChalant, the author of Snap &amp; Snacks" class="about-intro-portrait" fetchpriority="high">
+    </section>
 
-      <div class="about-block">
-        <h2>Why Snap & Snack?</h2>
-        <p>Because every trip has two things in common — I always have my camera, and I'm always hungry. The name felt right the moment I thought of it. 😄</p>
-      </div>
+    <section class="about-name" aria-labelledby="about-name-title">
+      <h2 id="about-name-title">Why Snap &amp; Snacks?</h2>
+      <p>Every trip has two things in common. I always have my camera, and I’m always hungry.</p>
+    </section>
 
-      <div class="about-block">
-        <h2>Get in touch</h2>
-        <p>Have a question, a recommendation, or just want to say hi? I'd love to hear from you!</p>
-        <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap">
-          <a href="/blog" class="read-btn">Read my posts →</a>
-          <a href="/gallery" class="btn btn-outline">See my photos</a>
+    <% if (stories.length) { %>
+      <section aria-labelledby="about-stories">
+        <div class="about-stories-heading">
+          <h2 id="about-stories">Start here</h2>
+          <a href="/gallery" class="info-text-link">See my photos ↗</a>
         </div>
-      </div>
-
-    </div>
-  </div>
+        <div class="about-stories">
+          <% for (const story of stories) { %>
+            <article class="about-story">
+              <a href="/post/<%= encodeURIComponent(story.slug) %>">
+                <% if (story.image) { %>
+                  <img src="<%= story.image %>" alt="" loading="lazy" decoding="async"
+                    <%- responsiveImageAttributes(story.image, '(max-width: 640px) calc(100vw - 2rem), (max-width: 900px) 45vw, 360px') %>>
+                <% } %>
+                <div>
+                  <p class="info-kicker"><%= story.category %></p>
+                  <h3><%= story.title %></h3>
+                </div>
+              </a>
+            </article>
+          <% } %>
+        </div>
+      </section>
+    <% } %>
+  </main>
 
   <!-- Back to top -->
   <%- include('partials/footer') %>

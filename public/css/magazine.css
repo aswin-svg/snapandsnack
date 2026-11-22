@@ -47,6 +47,10 @@
   overflow-wrap: anywhere;
 }
 .magazine-topic-cover p { max-width: 36ch; margin-top: .6rem; color: #eef4ec; }
+.magazine-blog-heading { padding: .65rem 0 1rem; }
+.magazine-blog-heading h1 { font: 400 clamp(2.8rem, 7vw, 4.65rem)/1.05 var(--serif); letter-spacing: -.045em; }
+.magazine-blog-heading p { color: var(--magazine-muted); margin-top: .65rem; }
+.magazine-results { color: var(--magazine-muted); font-size: .9rem; margin-bottom: .85rem; overflow-wrap: anywhere; }
 
 .magazine .blog-filters { margin: 1.25rem 0 1.5rem; }
 .magazine .filter-btn, .magazine .tag {
