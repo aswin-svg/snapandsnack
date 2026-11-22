@@ -1,26 +1,36 @@
-<nav class="nav">
-  <div class="container nav-inner">
-    <a href="/" class="nav-logo">Snap &amp; <span>Snacks</span></a>
-    <div class="nav-links">
-      <a href="/"<% if (typeof active !== 'undefined' && active === 'home') { %> class="active"<% } %>>Home</a>
-      <a href="/blog"<% if (typeof active !== 'undefined' && active === 'blog') { %> class="active"<% } %>>Blog</a>
-      <a href="/gallery"<% if (typeof active !== 'undefined' && active === 'gallery') { %> class="active"<% } %>>Gallery</a>
-      <a href="/about"<% if (typeof active !== 'undefined' && active === 'about') { %> class="active"<% } %>>About</a>
-      <a href="/contact"<% if (typeof active !== 'undefined' && active === 'contact') { %> class="active"<% } %>>Contact</a>
-      <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
-        <div class="toggle-thumb" id="toggle-thumb">☀️</div>
-      </div>
-    </div>
-    <button class="nav-hamburger" onclick="toggleMenu()">☰</button>
-  </div>
-  <div class="nav-mobile" id="nav-mobile">
-    <a href="/">Home</a>
-    <a href="/blog">Blog</a>
-    <a href="/gallery">Gallery</a>
-    <a href="/about">About</a>
-    <a href="/contact">Contact</a>
-    <div class="toggle-track dark-toggle" onclick="toggleDark()" title="Toggle dark mode" role="button" tabindex="0" aria-label="Toggle dark mode" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleDark()}">
-      <div class="toggle-thumb" id="toggle-thumb">☀️</div>
+<%
+  const currentPage = typeof active === 'string' ? active : '';
+  const currentSection = typeof section === 'string' ? section : currentPage;
+  const exploring = topics.some(topic => topic.slug === currentSection);
+  const links = [
+    { key: 'gallery', url: '/gallery', label: 'Gallery' },
+    { key: 'about', url: '/about', label: 'About' },
+    { key: 'contact', url: '/contact', label: 'Contact' }
+  ];
+%>
+<link rel="stylesheet" href="/css/navigation.css">
+<nav class="nav site-nav" aria-label="Main navigation">
+  <div class="container nav-inner site-nav-inner">
+    <a href="/" class="nav-logo"<% if (currentPage === 'home') { %> aria-current="page"<% } %>>Snap &amp; <span>Snacks</span></a>
+    <button type="button" class="site-nav-toggle" aria-controls="site-nav-panel" aria-expanded="false">
+      <span aria-hidden="true">☰</span> Menu
+    </button>
+    <div class="site-nav-panel" id="site-nav-panel">
+      <a href="/blog"<% if (currentPage === 'blog') { %> aria-current="page"<% } else if (currentSection === 'blog') { %> class="site-nav-section-active"<% } %>>Blog</a>
+      <details class="site-explore<%= exploring ? ' site-nav-section-active' : '' %>">
+        <summary>Explore <span aria-hidden="true">⌄</span></summary>
+        <div class="site-explore-links">
+          <% for (const topic of topics) { %>
+            <a href="/topics/<%= topic.slug %>"<% if (currentPage === topic.slug) { %> aria-current="page"<% } %>><%= topic.name %></a>
+          <% } %>
+        </div>
+      </details>
+      <% for (const link of links) { %>
+        <a href="<%= link.url %>"<% if (currentPage === link.key) { %> aria-current="page"<% } %>><%= link.label %></a>
+      <% } %>
+      <button type="button" class="site-theme-toggle dark-toggle" onclick="toggleDark()" aria-label="Dark mode" aria-pressed="false">
+        <span class="toggle-thumb" aria-hidden="true">☀️</span>
+      </button>
     </div>
   </div>
 </nav>

@@ -771,7 +771,17 @@ app.post('/admin/newsletter/remove', requireLogin, async (req, res) => {
 
 app.get('/privacy', (req, res) => res.render('privacy'));
 app.get('/terms',   (req, res) => res.render('terms'));
-app.get('/about',   (req, res) => res.render('about'));
+app.get('/about', async (req, res) => {
+  const posts = USE_MONGO
+    ? await Post.find({ status: { $ne: 'draft' } }).select('id title slug category image pinned').sort({ id: -1 }).lean()
+    : readDB().posts.filter(post => post.status !== 'draft').sort((a, b) => b.id - a.id);
+  const picks = topics.map(topic => {
+    const matching = posts.filter(post => post.category === topic.name);
+    return matching.find(post => post.pinned) || matching[0];
+  }).filter(Boolean);
+  const stories = [...picks, ...posts.filter(post => !picks.includes(post))].slice(0, 3);
+  res.render('about', { stories });
+});
 app.get('/contact', (req, res) => res.render('contact', { success: false, error: null, fields: {} }));
 
 app.post('/contact', contactLimiter, csrfProtection, async (req, res) => {

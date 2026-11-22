@@ -17,14 +17,14 @@
   <meta property="og:url" content="<%= siteUrl(pagePath) %>">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/css/style.css">
-  <% if (topic) { %><link rel="stylesheet" href="/css/magazine.css"><% } %>
+  <link rel="stylesheet" href="/css/magazine.css?v=stories">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body<% if (topic) { %> class="magazine"<% } %>>
+<body class="magazine">
 
-  <%- include('partials/nav', { active: 'blog' }) %>
+  <%- include('partials/nav', { active: topic?.slug || 'blog' }) %>
 
-  <main class="<%= topic ? 'magazine-wrap' : 'container' %>">
+  <main class="magazine-wrap">
     <% if (topic) { %>
     <header class="magazine-topic-cover">
       <img src="<%= topic.cover %>" alt="" fetchpriority="high"
@@ -35,10 +35,10 @@
       </div>
     </header>
     <% } else { %>
-    <div class="blog-header">
-      <h1>All Posts</h1>
-      <p style="color:var(--muted);font-weight:300"><%= posts.length %> article<%= posts.length !== 1 ? 's' : '' %></p>
-    </div>
+    <header class="magazine-blog-heading">
+      <h1>All stories</h1>
+      <p>Travel notes, good meals, and everyday discoveries.</p>
+    </header>
     <% } %>
 
     <div class="blog-filters">
@@ -60,6 +60,7 @@
       </form>
       <% if (search || (activeCategory && !topic)) { %><a href="<%= pagePath %>" class="filter-btn">Clear filters</a><% } %>
     </div>
+    <% if (!topic || search) { %><p class="magazine-results"><%= posts.length %> <%= posts.length === 1 ? 'story' : 'stories' %><% if (search) { %> matching “<%= search %>”<% } %></p><% } %>
 
     <% if (popularTags.length) { %>
       <section class="topic-tags" aria-labelledby="topic-tags-title">
@@ -77,32 +78,31 @@
       </div>
     <% } else { %>
       <% if (topic) { %><h2 class="magazine-section-title"><%= search ? 'Search results' : 'Stories' %></h2><% } %>
-      <div class="posts-grid<%= topic ? ' magazine-cards' : '' %>" style="padding-bottom:4rem">
+      <div class="posts-grid magazine-cards">
         <% const stories = featuredPost ? [featuredPost, ...posts.filter(post => post !== featuredPost)] : posts; %>
         <% stories.forEach(post => { %>
+          <% const postLink = '/post/' + encodeURIComponent(post.slug); %>
           <article class="post-card">
             <% if (post.image) { %>
-              <a href="/post/<%= post.slug %>"><img src="<%= post.image %>" alt="<%= post.title %>" class="post-card-img" loading="lazy" decoding="async"
-                <%- responsiveImageAttributes(post.image, topic ? '(max-width: 640px) calc(100vw - 2rem), (max-width: 950px) 44vw, 480px' : '(max-width: 550px) calc(100vw - 3rem), (max-width: 1100px) 45vw, 350px') %>></a>
+              <a href="<%= postLink %>" tabindex="-1" aria-hidden="true"><img src="<%= post.image %>" alt="" class="post-card-img" loading="lazy" decoding="async"
+                <%- responsiveImageAttributes(post.image, '(max-width: 640px) calc(100vw - 2rem), (max-width: 950px) 44vw, 480px') %>></a>
             <% } else { %>
-              <a href="/post/<%= post.slug %>"><div class="post-card-img-placeholder">📷</div></a>
+              <div class="post-card-img-placeholder" aria-hidden="true">📷</div>
             <% } %>
             <div class="post-card-body">
-              <% if (topic) { %>
-                <p class="magazine-kicker"><%= post === featuredPost ? 'Featured story' : post.category %></p>
-              <% } else { %><span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span><% } %>
-              <h3><a href="/post/<%= post.slug %>"><%= post.title %></a></h3>
-              <% const excerpt = topic ? post.content.replace(/\[image:[^\]]*\]/g, '').trim() : post.content; %>
+              <p class="magazine-kicker"><%= post === featuredPost ? 'Featured story' : post.category %></p>
+              <h3><a href="<%= postLink %>"><%= post.title %></a></h3>
+              <% const excerpt = post.content.replace(/\[image:[^\]]*\]/g, '').trim(); %>
               <p class="post-card-excerpt"><%= excerpt.slice(0, 130) %><%= excerpt.length > 130 ? '…' : '' %></p>
-              <% if (post.tags.length > 0) { %>
+              <% if (post.tags?.length) { %>
                 <div class="post-tags" style="margin-bottom:0.75rem">
-                  <% post.tags.slice(0,3).forEach(t => { %><a href="/tags/<%= encodeURIComponent(t) %>" class="tag">#<%= t %></a><% }) %>
+                  <% (post.tags || []).slice(0,3).forEach(t => { %><a href="/tags/<%= encodeURIComponent(t) %>" class="tag">#<%= t %></a><% }) %>
                 </div>
               <% } %>
               <div class="post-card-footer">
                 <span class="post-date"><%= post.date %></span>
                 <span class="post-read-time">⏱️ <%= Math.max(1, Math.round(post.content.split(/\s+/).length / 200)) %> min read</span>
-                <a href="/post/<%= post.slug %>" class="post-link">Read →</a>
+                <a href="<%= postLink %>" class="post-link" aria-label="Read <%= post.title %>">Read →</a>
               </div>
             </div>
           </article>

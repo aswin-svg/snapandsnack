@@ -13,80 +13,70 @@
   <meta property="og:description" content="Photo gallery — moments captured from travels around the world.">
   <meta property="og:url" content="<%= siteUrl('/gallery') %>">
   <meta name="twitter:card" content="summary_large_image">
-  <link rel="stylesheet" href="/css/gallery.css">
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/gallery.css?v=photo-grid">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body>
 
   <%- include('partials/nav', { active: 'gallery' }) %>
 
-  <div class="container">
-    <div class="gallery-header">
-      <h1>Photo Gallery</h1>
-      <p>Moments captured from the road 📷 — <span id="photo-count"><%= photos.length %></span> photos</p>
-    </div>
-
-    <% if (photos.length > 0) { %>
-    <div class="gallery-filter-bar">
-      <button type="button" class="gallery-filter-btn active" data-gallery-filter="" aria-pressed="true">All</button>
-      <%
-        const allCaptions = photos.map(p => p.caption).filter(Boolean);
-        const keywords = [...new Set(allCaptions.flatMap(c => c.split(/[,\s]+/).filter(w => w.length > 3)))].slice(0, 8);
-        keywords.forEach(kw => {
-      %>
-        <button type="button" class="gallery-filter-btn" data-gallery-filter="<%= kw.toLowerCase() %>" aria-pressed="false"><%= kw %></button>
-      <% }) %>
-      <div class="gallery-search-box">
-        <input type="search" id="gallery-search" placeholder="Search photos..." aria-label="Search photos">
+  <main class="gallery-page">
+    <header class="gallery-heading">
+      <div>
+        <h1>Gallery</h1>
+        <p>Places, plates, and moments from the road.</p>
       </div>
-    </div>
-    <% } %>
-  </div>
+      <p id="photo-count" class="gallery-count" role="status"><%= photos.length %> <%= photos.length === 1 ? 'photo' : 'photos' %></p>
+    </header>
 
-  <% if (photos.length === 0) { %>
-    <div class="container">
+    <% if (photos.length === 0) { %>
       <div class="empty-state">
-        <div class="empty-icon">📷</div>
-        <p>No photos yet — upload your first shots in the admin panel!</p>
-        <a href="/admin/gallery" class="btn btn-accent">Upload photos</a>
+        <p>No photos yet.</p>
       </div>
-    </div>
-  <% } else { %>
-
-  <div class="portfolio" id="photo-grid">
-    <% photos.forEach(photo => { %>
-      <% const srcset = gallerySrcset(photo.src); %>
-      <div class="project"
-           data-caption="<%= photo.caption || '' %>"
-           data-src="<%= photo.src %>">
-        <img class="project__image" src="<%= photo.src %>"
-          <% if (srcset) { %>srcset="<%= srcset %>" sizes="(max-width: 640px) 50vw, (max-width: 900px) 33vw, 25vw"
-          onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %>
-          alt="<%= photo.altText || photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
-        <% if (photo.caption) { %>
-          <p class="project__tag"><%= photo.caption.split(',')[0] %></p>
-          <h3 class="project__title"><%= photo.caption %></h3>
-        <% } else { %>
-          <p class="project__tag">📷</p>
-          <h3 class="project__title">Travel photo</h3>
-        <% } %>
-        <div class="grid__overlay">
-          <button type="button" class="view-btn" aria-haspopup="dialog">View photo</button>
+    <% } else { %>
+      <div class="gallery-controls">
+        <label class="gallery-search">
+          <span aria-hidden="true">⌕</span>
+          <input type="search" id="gallery-search" placeholder="Search photos" aria-label="Search photos">
+        </label>
+        <div class="gallery-filters" role="group" aria-label="Filter photos">
+          <button type="button" data-gallery-filter="" aria-pressed="true">All photos</button>
+          <%
+            const words = photos.flatMap(photo => (photo.caption || '').split(/[,\s]+/)).filter(word => word.length > 3);
+            const keywords = [...new Map(words.map(word => [word.toLowerCase(), word])).values()].slice(0, 8);
+            for (const keyword of keywords) {
+          %>
+            <button type="button" data-gallery-filter="<%= keyword.toLowerCase() %>" aria-pressed="false"><%= keyword %></button>
+          <% } %>
         </div>
       </div>
-    <% }) %>
-  </div>
 
-  <div id="no-results" style="display:none" class="container">
-    <div class="empty-state">
-      <div class="empty-icon">🔍</div>
-      <p>No photos found.</p>
-      <button type="button" class="btn btn-outline" id="gallery-reset">Show all</button>
-    </div>
-  </div>
+      <div class="gallery-grid" id="photo-grid">
+        <% for (const photo of photos) { %>
+          <% const srcset = gallerySrcset(photo.src); %>
+          <figure class="gallery-tile" data-caption="<%= photo.caption || '' %>" data-src="<%= photo.src %>">
+            <button type="button" class="gallery-open" aria-haspopup="dialog"
+              aria-label="Open full-size photo: <%= photo.caption || photo.altText || 'Travel photo' %>">
+              <span class="gallery-tile-image">
+                <img src="<%= photo.src %>"
+                  <% if (srcset) { %>srcset="<%= srcset %>" sizes="auto, (max-width: 640px) 50vw, (max-width: 900px) 45vw, 390px"
+                  onerror="this.onerror = null; this.removeAttribute('srcset')"<% } %>
+                  alt="<%= photo.altText || photo.caption || 'Travel photo' %>" loading="lazy" decoding="async">
+                <span class="gallery-open-icon" aria-hidden="true">↗</span>
+              </span>
+              <span class="gallery-caption"><%= photo.caption || photo.altText || 'Travel photo' %></span>
+            </button>
+          </figure>
+        <% } %>
+      </div>
 
-  <% } %>
+      <div id="no-results" class="empty-state" hidden>
+        <p>No photos found.</p>
+        <button type="button" class="btn btn-outline" id="gallery-reset">Show all</button>
+      </div>
+    <% } %>
+  </main>
 
   <dialog class="lightbox-overlay" id="lightbox" aria-label="Gallery photo" aria-describedby="lightbox-caption">
     <div class="lightbox-inner">
@@ -107,9 +97,9 @@
       let opener;
 
       photoGrid.addEventListener('click', event => {
-        const button = event.target.closest('.view-btn');
+        const button = event.target.closest('.gallery-open');
         if (!button) return;
-        const photo = button.closest('.project');
+        const photo = button.closest('.gallery-tile');
         opener = button;
         image.src = photo.dataset.src;
         image.alt = photo.querySelector('img').alt;
@@ -129,21 +119,21 @@
       const search = document.getElementById('gallery-search');
       const noResults = document.getElementById('no-results');
       const photoCount = document.getElementById('photo-count');
-      const photos = photoGrid.querySelectorAll('.project');
+      const photos = photoGrid.querySelectorAll('.gallery-tile');
       function showPhotos(query, activeFilter) {
         const keyword = query.trim().toLowerCase();
         for (const filter of filters) {
-          filter.classList.toggle('active', filter === activeFilter);
           filter.setAttribute('aria-pressed', filter === activeFilter);
         }
         let visible = 0;
         for (const photo of photos) {
-          const show = photo.dataset.caption.toLowerCase().includes(keyword);
-          photo.style.display = show ? '' : 'none';
+          const text = photo.dataset.caption + ' ' + photo.querySelector('img').alt;
+          const show = text.toLowerCase().includes(keyword);
+          photo.hidden = !show;
           if (show) visible++;
         }
-        noResults.style.display = visible ? 'none' : 'block';
-        photoCount.textContent = visible;
+        noResults.hidden = visible > 0;
+        photoCount.textContent = visible + (visible === 1 ? ' photo' : ' photos');
       }
       for (const filter of filters) {
         filter.addEventListener('click', () => {

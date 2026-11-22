@@ -29,7 +29,8 @@
 </head>
 <body class="magazine magazine-article">
 
-  <%- include('partials/nav') %>
+  <% const currentTopic = topics.find(topic => topic.name === post.category); %>
+  <%- include('partials/nav', { section: currentTopic?.slug || 'blog' }) %>
 
   <main class="post-layout-container magazine-wrap">
     <div class="post-main">
@@ -41,7 +42,6 @@
       <% } %>
 
       <header class="post-header">
-        <% const currentTopic = topics.find(topic => topic.name === post.category); %>
         <p class="magazine-kicker">
           <% if (currentTopic) { %><a href="/topics/<%= currentTopic.slug %>"><%= currentTopic.name %></a>
           <% } else { %><%= post.category %><% } %>
