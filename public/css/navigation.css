@@ -70,12 +70,14 @@
   .site-nav-panel > a[aria-current=page] { background: var(--accent-light); }
   .site-explore-links {
     position: static;
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 .5rem .35rem;
+    margin: 0 .5rem .35rem .85rem;
     min-width: 0;
+    padding: .15rem 0 .15rem .5rem;
+    border: 0;
+    border-inline-start: 2px solid var(--border);
+    border-radius: 0;
     box-shadow: none;
   }
-  .site-explore-links a { padding: .5rem .65rem; }
+  .site-explore-links a { padding: .5rem .55rem; }
   .site-theme-toggle { margin: .3rem .55rem 0; }
 }

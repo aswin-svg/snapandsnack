@@ -5,20 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Snap &amp; Snacks Admin</title>
   <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/studio.css">
+  <link rel="stylesheet" href="/css/studio.css?v=workspace">
 </head>
 <body class="studio">
-  <aside class="studio-sidebar">
-    <a class="studio-brand" href="/admin">Snap &amp; <span>Snacks</span></a>
-    <nav aria-label="Admin navigation">
-      <a href="/admin" aria-current="page">Dashboard</a>
-      <a href="/admin/gallery">Gallery</a>
-      <a href="/admin/newsletter">Newsletter</a>
-      <a href="/admin/messages">Messages <% if (unreadMessages) { %><span class="studio-count"><%= unreadMessages %></span><% } %></a>
-      <a href="/admin/password">Password</a>
-      <a href="/admin/logout">Log out</a>
-    </nav>
-  </aside>
+  <%- include('sidebar', { studioPage: 'dashboard' }) %>
 
   <main class="studio-main">
     <header class="studio-header">

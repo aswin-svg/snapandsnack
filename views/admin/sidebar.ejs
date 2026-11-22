@@ -1,0 +1,19 @@
+<aside class="studio-sidebar">
+  <a class="studio-brand" href="/admin">Snap &amp; <span>Snacks</span></a>
+  <nav aria-label="Admin navigation">
+    <% const links = [
+      ['dashboard', '/admin', 'Dashboard'],
+      ['editor', '/admin/new', 'New post'],
+      ['gallery', '/admin/gallery', 'Gallery'],
+      ['newsletter', '/admin/newsletter', 'Newsletter'],
+      ['messages', '/admin/messages', 'Messages'],
+      ['password', '/admin/password', 'Password']
+    ]; %>
+    <% for (const [key, url, label] of links) { %>
+      <a href="<%= url %>"<% if (studioPage === key) { %> aria-current="page"<% } %>>
+        <%= label %><% if (key === 'messages' && typeof unreadMessages === 'number' && unreadMessages > 0) { %><span class="studio-count"><%= unreadMessages %></span><% } %>
+      </a>
+    <% } %>
+    <a href="/admin/logout">Log out</a>
+  </nav>
+</aside>

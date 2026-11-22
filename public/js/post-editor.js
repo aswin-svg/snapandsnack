@@ -31,6 +31,7 @@
   const originalImage = image.getAttribute('src');
   const featureStatus = document.getElementById('featured-image-status');
   const revisionField = form.elements.namedItem('backupRevision');
+  const wordCount = document.getElementById('editor-word-count');
   const localTime = timestamp => new Date(timestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   const stored = readBackup(key);
   let pending = stored?.fields && typeof stored.revision === 'string' && Number.isFinite(stored.timestamp) ? stored : null;
@@ -39,6 +40,8 @@
 
   function updateShareText() {
     const values = fields();
+    const words = values.content.replace(/\[image:[^\]]+\]/g, ' ').trim().split(/\s+/).filter(Boolean).length;
+    wordCount.textContent = words.toLocaleString() + (words === 1 ? ' word' : ' words');
     document.getElementById('editor-share-title').textContent = values.metaTitle.trim() || values.title.trim() || 'Post title';
     document.getElementById('editor-share-description').textContent = values.metaDescription.trim() ||
       values.content.trim().slice(0, 150).replace(/\n/g, ' ');

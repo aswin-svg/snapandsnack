@@ -5,23 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Newsletter — Snap & Snacks Admin</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/studio.css?v=workspace">
 </head>
-<body class="admin-body">
+<body class="studio">
 
-  <nav class="admin-nav">
-    <div class="admin-nav-inner">
-      <div style="display:flex;align-items:center;gap:0.5rem">
-        <a href="/" class="admin-logo">Snap &amp; <span>Snacks</span></a>
-        <span class="admin-badge">Admin</span>
-      </div>
-      <div class="admin-nav-links">
-        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
-        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
-      </div>
-    </div>
-  </nav>
+  <%- include('sidebar', { studioPage: 'newsletter' }) %>
 
-  <div class="admin-main">
+  <div class="studio-main">
     <header class="subscriber-header">
       <h1>Newsletter subscribers</h1>
       <% if (subscribers.length) { %><a href="/admin/newsletter/export" class="btn btn-outline">Export CSV</a><% } %>

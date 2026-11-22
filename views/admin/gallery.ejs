@@ -6,26 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery — Snap & Snack Admin</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/studio.css?v=workspace">
 </head>
-<body class="admin-body">
+<body class="studio">
 
-  <nav class="admin-nav">
-    <div class="admin-nav-inner">
-      <div style="display:flex;align-items:center;gap:0.5rem">
-        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
-        <span class="admin-badge">Admin</span>
-      </div>
-      <div class="admin-nav-links">
-        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
-        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
-      </div>
-    </div>
-  </nav>
+  <%- include('sidebar', { studioPage: 'gallery' }) %>
 
-  <div class="admin-main">
+  <div class="studio-main">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
       <div>
-        <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.25rem">Photo Gallery</h1>
+        <h1>Photo Gallery</h1>
         <p style="color:#6b7280;font-size:0.9rem"><%= photos.length %> photo<%= photos.length !== 1 ? 's' : '' %> uploaded</p>
       </div>
       <a href="/gallery" target="_blank" class="btn btn-outline btn-sm">View public gallery ↗</a>
@@ -38,11 +28,11 @@
       <form method="POST" action="/admin/gallery/upload?_csrf=<%= encodeURIComponent(csrfToken) %>" enctype="multipart/form-data">
         <div class="form-group">
           <label>Select photos <span class="form-hint">(you can select multiple at once)</span></label>
-          <div class="upload-area" onclick="document.getElementById('photo-input').click()">
+          <label class="upload-area" for="photo-input">
             <p style="font-size:1.5rem;margin-bottom:0.5rem">📷</p>
             <p>Click to select photos</p>
             <p style="font-size:0.8rem;margin-top:0.25rem">JPG, PNG · Max 10MB each · Up to 20 at once</p>
-          </div>
+          </label>
           <input type="file" id="photo-input" name="photos" accept="image/jpeg,image/png,image/webp" multiple onchange="showFileNames(this)">
           <p id="file-names" style="font-size:0.85rem;color:#6b7280;margin-top:0.5rem"></p>
         </div>

@@ -2,27 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="QpMEQmZbbkF7CT-Jn0u6TQALwG0zIakc_le6AdARl7s">
   <title>Messages — Snap & Snack Admin</title>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/studio.css?v=workspace">
 </head>
-<body class="admin-body">
-  <nav class="admin-nav">
-    <div class="admin-nav-inner">
-      <div style="display:flex;align-items:center;gap:0.5rem">
-        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
-        <span class="admin-badge">Admin</span>
-      </div>
-      <div class="admin-nav-links">
-        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
-        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
-      </div>
-    </div>
-  </nav>
+<body class="studio">
+  <%- include('sidebar', { studioPage: 'messages' }) %>
 
-  <div class="admin-main">
+  <div class="studio-main">
     <div style="margin-bottom:1.5rem">
-      <h1 style="font-size:1.5rem;font-weight:600;margin-bottom:0.25rem">📩 Contact Messages</h1>
+      <h1>Contact messages</h1>
       <p style="color:#6b7280;font-size:0.9rem"><%= messages.length %> message<%= messages.length !== 1 ? 's' : '' %> received</p>
     </div>
 
@@ -39,7 +30,7 @@
               <div class="comment-avatar" style="background:#5a67d8"><%= msg.name.charAt(0).toUpperCase() %></div>
               <div style="flex:1">
                 <div style="font-weight:600;color:#1a1a1a"><%= msg.name %></div>
-                <div style="font-size:0.82rem;color:#6b7280"><%= msg.email %> · <%= msg.date %></div>
+                <div style="font-size:0.82rem;color:#6b7280"><a class="studio-message-email" href="mailto:<%= encodeURIComponent(msg.email || '').replace(/%40/g, '@') %>"><%= msg.email %></a> · <%= msg.date %></div>
               </div>
               <form method="POST" action="/admin/messages/delete/<%= msg.id %>" onsubmit="return confirm('Delete this message?')">
                 <input type="hidden" name="_csrf" value="<%= csrfToken %>">

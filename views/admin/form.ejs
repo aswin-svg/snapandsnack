@@ -6,207 +6,114 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= post ? 'Edit Post' : 'New Post' %> — Snap & Snack Admin</title>
   <link rel="stylesheet" href="/css/style.css">
-  <style>
-    .editor-toolbar {
-      display: flex; flex-wrap: wrap; gap: 4px;
-      padding: 8px 10px;
-      background: #f9fafb;
-      border: 1px solid #d1d5db;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-    }
-    .editor-toolbar button {
-      padding: 5px 10px; font-size: 13px;
-      border: 1px solid #d1d5db; border-radius: 5px;
-      background: #fff; color: #374151;
-      cursor: pointer; font-family: inherit;
-      transition: all 0.15s;
-    }
-    .editor-toolbar button:hover { background: #f3f4f6; border-color: #9ca3af; }
-    .editor-toolbar .sep { width: 1px; background: #e5e7eb; margin: 0 2px; }
-    .editor-toolbar .insert-img-btn {
-      background: #f5ede6; color: #c9622f;
-      border-color: #f0cdb8;
-    }
-    .editor-toolbar .insert-img-btn:hover { background: #f0cdb8; }
-    #content {
-      border-radius: 0 0 8px 8px !important;
-      border-top: none !important;
-    }
-    .inline-upload-area {
-      background: #f9fafb;
-      border: 1.5px dashed #d1d5db;
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 0.5rem;
-      display: none;
-    }
-    .inline-upload-area.open { display: block; }
-    .inline-upload-area label { font-size: 0.85rem; font-weight: 500; color: #374151; display: block; margin-bottom: 0.5rem; }
-    .inline-upload-area input { font-size: 0.85rem; }
-    .inline-upload-area p { font-size: 0.8rem; color: #9ca3af; margin-top: 0.4rem; }
-    .uploaded-inline-imgs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 0.75rem; }
-    .uploaded-inline-img {
-      display: flex; align-items: center; gap: 6px;
-      background: #fff; border: 1px solid #e5e7eb;
-      border-radius: 6px; padding: 5px 8px; font-size: 12px;
-      color: #374151;
-    }
-    .uploaded-inline-img img { height: 32px; width: 32px; object-fit: cover; border-radius: 4px; }
-    .uploaded-inline-img button {
-      background: none; border: none; color: #9ca3af;
-      cursor: pointer; font-size: 14px; padding: 0;
-    }
-    .hint-box {
-      background: #eff6ff; border: 1px solid #bfdbfe;
-      border-radius: 6px; padding: 8px 12px;
-      font-size: 0.8rem; color: #1e40af; margin-top: 6px;
-      line-height: 1.6;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/studio.css?v=workspace">
 </head>
-<body class="admin-body">
-
-  <nav class="admin-nav">
-    <div class="admin-nav-inner">
-      <div style="display:flex;align-items:center;gap:0.5rem">
-        <a href="/" class="admin-logo">Snap &amp; <span>Snack</span></a>
-        <span class="admin-badge">Admin</span>
+<body class="studio">
+  <%- include('sidebar', { studioPage: 'editor' }) %>
+  <main class="studio-main">
+    <header class="studio-header">
+      <div>
+        <p class="studio-kicker">Publishing</p>
+        <h1><%= post ? 'Edit post' : 'New post' %></h1>
       </div>
-      <div class="admin-nav-links">
-        <a href="/admin" class="btn btn-outline btn-sm">← Dashboard</a>
-        <a href="/admin/logout" class="btn btn-outline btn-sm">Log out</a>
-      </div>
-    </div>
-  </nav>
-
-  <div class="admin-main">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
-      <h1 style="font-size:1.5rem;font-weight:600"><%= post ? 'Edit Post' : 'Create New Post' %></h1>
-      <% if (post && post.status === 'draft') { %>
-        <span style="background:#fef3c7;color:#92400e;font-size:0.8rem;padding:0.3rem 0.85rem;border-radius:20px;font-weight:500">📝 Draft</span>
-      <% } else if (post) { %>
-        <span style="background:#d1fae5;color:#065f46;font-size:0.8rem;padding:0.3rem 0.85rem;border-radius:20px;font-weight:500">✅ Published</span>
+      <% if (post) { %>
+        <div class="studio-actions">
+          <span class="studio-count"><%= post.status === 'draft' ? 'Draft' : 'Published' %></span>
+          <a class="btn btn-outline btn-sm" href="<%= post.status === 'draft' ? '/admin/preview/' + post.id : '/post/' + encodeURIComponent(post.slug) %>" target="_blank" rel="noopener">
+            <%= post.status === 'draft' ? 'Preview saved draft ↗' : 'View published post ↗' %>
+          </a>
+        </div>
       <% } %>
-    </div>
+    </header>
 
-    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
-
-    <form method="POST" action="<%= (post ? '/admin/edit/' + post.id : '/admin/new') + '?_csrf=' + encodeURIComponent(csrfToken) %>" enctype="multipart/form-data" class="form-card" id="post-form" data-editor-id="<%= post ? post.id : 'new' %>">
+    <% if (error) { %><p class="alert alert-error" role="alert"><%= error %></p><% } %>
+    <form method="POST" action="<%= (post ? '/admin/edit/' + post.id : '/admin/new') + '?_csrf=' + encodeURIComponent(csrfToken) %>"
+      enctype="multipart/form-data" class="studio-editor" id="post-form" data-editor-id="<%= post ? post.id : 'new' %>">
       <input type="hidden" name="backupRevision">
       <div class="editor-recovery" id="editor-recovery" hidden>
         <p id="editor-recovery-message"></p>
         <button type="button" id="editor-restore" class="btn btn-outline btn-sm">Restore text</button>
         <button type="button" id="editor-discard" class="btn btn-outline btn-sm">Discard backup</button>
       </div>
-      <p id="editor-save-status" class="editor-status" role="status">Use Save as draft or Publish post to save to the site.</p>
-
-      <div class="form-group">
-        <label>Post title *</label>
-        <input type="text" name="title" placeholder="e.g. The Best Street Food in Bangkok" required value="<%= post ? post.title : '' %>">
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label>Category</label>
-          <select name="category">
-            <% ['Travel','Food','Lifestyle'].forEach(cat => { %>
-              <option value="<%= cat %>" <%= post && post.category === cat ? 'selected' : '' %>><%= cat %></option>
-            <% }) %>
-          </select>
-        </div>
-        <div class="form-group">
-                  <label>Tags <span class="form-hint">(comma separated)</span></label>
-          <input type="text" name="tags" placeholder="e.g. thailand, street food, asia" value="<%= (post?.tags || []).join(', ') %>">
-        </div>
-        <div class="form-group">
-          <label>SEO title <span class="form-hint">(optional — shown in Google results, defaults to the post title)</span></label>
-          <input type="text" name="metaTitle" maxlength="70" placeholder="Leave blank to use the post title" value="<%= post && post.metaTitle ? post.metaTitle : '' %>">
-        </div>
-        <div class="form-group">
-          <label>Meta description <span class="form-hint">(optional — shown in Google results, max 160 characters)</span></label>
-          <textarea name="metaDescription" maxlength="160" rows="2" placeholder="Leave blank to auto-generate from the post content"><%= post && post.metaDescription ? post.metaDescription : '' %></textarea>
-        </div>
-      </div>
-
-      <!-- ░░ EDITOR WITH TOOLBAR ░░ -->
-      <div class="form-group">
-        <label>Content *</label>
-
-        <!-- Toolbar -->
-        <div class="editor-toolbar">
-  <button type="button" onclick="insertTag('**','**')" title="Bold"><b>B</b></button>
-  <button type="button" onclick="insertTag('*','*')" title="Italic"><i>I</i></button>
-  <button type="button" onclick="insertTag('~~','~~')" title="Strikethrough"><s>S</s></button>
-  <div class="sep"></div>
-  <button type="button" onclick="insertLine('## ')" title="Heading 2">H2</button>
-  <button type="button" onclick="insertLine('### ')" title="Heading 3">H3</button>
-  <button type="button" onclick="insertLine('#### ')" title="Heading 4">H4</button>
-  <div class="sep"></div>
-  <button type="button" onclick="insertLine('> ')" title="Quote">❝ Quote</button>
-  <button type="button" onclick="insertLine('---')" title="Divider">— Line</button>
-  <div class="sep"></div>
-  <button type="button" onclick="insertLine('• ')" title="Bullet list">• List</button>
-  <button type="button" onclick="insertLine('1. ')" title="Numbered list">1. List</button>
-  <div class="sep"></div>
-  <button type="button" onclick="insertLink()" title="Insert link">🔗 Link</button>
-  <button type="button" onclick="insertEmoji()" title="Insert emoji">😊 Emoji</button>
-  <div class="sep"></div>
-  <button type="button" class="insert-img-btn" onclick="toggleInlineUpload()">📷 Image</button>
-</div>
-
-        <textarea id="content" name="content" rows="16" placeholder="Write your story here...
-
-Tips:
-**bold text**
-*italic text*
-## Big heading
-### Smaller heading
-> This is a quote
----  (horizontal line)
-[image:filename.jpg]  ← inserted automatically when you upload" required><%= post ? post.content : '' %></textarea>
-
-        <div class="hint-box">
-          💡 Use the toolbar buttons above to format your text. Click <strong>📷 Insert image</strong> to add a photo between paragraphs.
-        </div>
-
-        <!-- Inline image upload -->
-        <div class="inline-upload-area" id="inline-upload-area">
-          <label>Upload a photo to insert at cursor position:</label>
-          <input type="file" id="inline-img-input" accept="image/jpeg,image/png,image/webp" onchange="uploadInlineImage(this)">
-          <p>The image tag will be inserted into your text automatically after upload.</p>
-          <div class="uploaded-inline-imgs" id="uploaded-inline-imgs"></div>
-        </div>
-
-        <!-- Hidden inputs for inline images — added dynamically -->
-        <div id="inline-img-inputs"></div>
-      </div>
-
-      <!-- Featured image -->
-      <div class="form-group">
-        <label for="featured-image">Featured image <span class="form-hint">(JPG, PNG, or WebP, max 10 MB)</span></label>
-        <input type="file" id="featured-image" name="image" accept="image/jpeg,image/png,image/webp">
-        <p class="editor-status" id="featured-image-status"></p>
-        <figure class="editor-share-preview">
-          <figcaption>Share preview</figcaption>
-          <img id="editor-share-image" src="<%= post?.image || '/logo.png' %>" alt="Image used for the post’s share preview">
-          <div>
-            <small><%= new URL(siteUrl('/')).hostname %></small>
-            <strong id="editor-share-title"><%= post?.metaTitle || post?.title || 'Post title' %></strong>
-            <p id="editor-share-description"></p>
+      <div class="studio-editor-layout">
+        <section class="studio-panel studio-editor-panel" aria-labelledby="write-heading">
+          <h2 id="write-heading">Write</h2>
+          <label for="post-title">Title</label>
+          <input type="text" id="post-title" name="title" maxlength="160" placeholder="Give your story a title" required value="<%= post?.title || '' %>">
+          <div class="studio-editor-label">
+            <label for="content">Story</label>
+            <span id="editor-word-count"></span>
           </div>
-        </figure>
+          <div class="editor-toolbar">
+            <button type="button" onclick="insertTag('**','**')" aria-label="Bold" title="Bold"><b>B</b></button>
+            <button type="button" onclick="insertTag('*','*')" aria-label="Italic" title="Italic"><i>I</i></button>
+            <button type="button" onclick="insertTag('~~','~~')" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+            <button type="button" onclick="insertLine('## ')" title="Heading 2">H2</button>
+            <button type="button" onclick="insertLine('### ')" title="Heading 3">H3</button>
+            <button type="button" onclick="insertLine('#### ')" title="Heading 4">H4</button>
+            <button type="button" onclick="insertLine('> ')">Quote</button>
+            <button type="button" onclick="insertLine('---')">Divider</button>
+            <button type="button" onclick="insertLine('• ')" title="Bullet list">• List</button>
+            <button type="button" onclick="insertLine('1. ')" title="Numbered list">1. List</button>
+            <button type="button" onclick="insertLink()">Link</button>
+            <button type="button" onclick="insertEmoji()">Emoji</button>
+            <button type="button" onclick="toggleInlineUpload(this)" aria-controls="inline-upload-area" aria-expanded="false">Insert image</button>
+          </div>
+          <textarea id="content" name="content" rows="18" maxlength="100000" placeholder="Write your story here…" required><%= post?.content || '' %></textarea>
+          <div class="inline-upload-area" id="inline-upload-area">
+            <label for="inline-img-input">Insert a photo at the cursor</label>
+            <input type="file" id="inline-img-input" accept="image/jpeg,image/png,image/webp" onchange="uploadInlineImage(this)">
+            <p>Photos are uploaded when you save the post.</p>
+            <div class="uploaded-inline-imgs" id="uploaded-inline-imgs"></div>
+          </div>
+          <div id="inline-img-inputs"></div>
+        </section>
+        <div class="studio-editor-settings">
+          <section class="studio-panel studio-editor-panel" aria-labelledby="details-heading">
+            <h2 id="details-heading">Story details</h2>
+            <label for="post-category">Category</label>
+            <select id="post-category" name="category">
+              <% for (const category of [...new Set([...topics.map(topic => topic.name), post?.category].filter(Boolean))]) { %>
+                <option value="<%= category %>" <%= post?.category === category ? 'selected' : '' %>><%= category %></option>
+              <% } %>
+            </select>
+            <label for="post-tags">Tags <span class="form-hint">Separated by commas</span></label>
+            <input type="text" id="post-tags" name="tags" maxlength="500" placeholder="Nepal, street food" value="<%= (post?.tags || []).join(', ') %>">
+          </section>
+          <section class="studio-panel studio-editor-panel" aria-labelledby="share-heading">
+            <h2 id="share-heading">Image and sharing</h2>
+            <label for="featured-image">Featured image <span class="form-hint">Up to 10 MB</span></label>
+            <input type="file" id="featured-image" name="image" accept="image/jpeg,image/png,image/webp">
+            <p class="editor-status" id="featured-image-status"></p>
+            <figure class="editor-share-preview">
+              <figcaption>Share preview</figcaption>
+              <img id="editor-share-image" src="<%= post?.image || '/logo.png' %>" alt="Image used for the post’s share preview">
+              <div>
+                <small><%= new URL(siteUrl('/')).hostname %></small>
+                <strong id="editor-share-title"><%= post?.metaTitle || post?.title || 'Post title' %></strong>
+                <p id="editor-share-description"></p>
+              </div>
+            </figure>
+            <details class="studio-seo">
+              <summary>Search and sharing text</summary>
+              <label for="post-meta-title">SEO title</label>
+              <input type="text" id="post-meta-title" name="metaTitle" maxlength="70" placeholder="Defaults to the post title" value="<%= post?.metaTitle || '' %>">
+              <label for="post-meta-description">Description</label>
+              <textarea id="post-meta-description" name="metaDescription" maxlength="160" rows="3" placeholder="Defaults to the start of your story"><%= post?.metaDescription || '' %></textarea>
+            </details>
+          </section>
+        </div>
       </div>
-
-      <!-- Actions -->
-      <div class="form-actions">
-        <a href="/admin" class="btn btn-outline">Cancel</a>
-        <button type="submit" name="action" value="draft" class="btn btn-draft">📝 Save as draft</button>
-        <button type="submit" name="action" value="publish" class="btn btn-accent">🚀 Publish post</button>
+      <div class="studio-editor-actions">
+        <p id="editor-save-status" class="editor-status" role="status">Use Save as draft or Publish post to save to the site.</p>
+        <div class="studio-actions">
+          <a href="/admin" class="btn btn-outline">Cancel</a>
+          <button type="submit" name="action" value="draft" class="btn btn-outline">Save as draft</button>
+          <button type="submit" name="action" value="publish" class="btn btn-accent"><%= post?.status === 'published' ? 'Update post' : 'Publish post' %></button>
+        </div>
       </div>
-
     </form>
-  </div>
+  </main>
 
   <script>
     // ─── Toolbar helpers ───────────────────────────────────────────
@@ -236,8 +143,9 @@ Tips:
     }
 
     // ─── Inline image upload ───────────────────────────────────────
-    function toggleInlineUpload() {
-      document.getElementById('inline-upload-area').classList.toggle('open');
+    function toggleInlineUpload(button) {
+      const open = document.getElementById('inline-upload-area').classList.toggle('open');
+      button.setAttribute('aria-expanded', String(open));
     }
 
     let inlineImgCounter = 0;
@@ -311,7 +219,7 @@ function insertEmoji() {
 }
 
   </script>
-  <script src="/js/post-editor.js" defer></script>
+  <script src="/js/post-editor.js?v=workspace" defer></script>
 
 </body>
 </html>
