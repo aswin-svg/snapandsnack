@@ -80,11 +80,12 @@ const siteOrigin = new URL(process.env.SITE_URL || 'https://snapandsnacks.com').
 const galleryWidths = [320, 640, 960];
 const storyWidths = [320, 640, 960, 1440, 1920];
 const imageFilename = /^[^./\\:\x00][^/\\:\x00]*\.(?:jpe?g|png|gif|webp)$/i;
-const articleImageSizes = '(max-width: 900px) calc(100vw - 3rem), (max-width: 1160px) calc(100vw - 416px), 744px';
+const storyCoverSizes = '(max-width: 640px) calc(100vw - 2rem), (max-width: 1252px) calc(100vw - 3.5rem), 1196px';
+const articleImageSizes = '(max-width: 720px) calc(100vw - 2rem), 688px';
 const topics = [
-  { slug: 'travel', name: 'Travel', description: 'Places, journeys, and stories from the road.' },
-  { slug: 'food', name: 'Food', description: 'Memorable meals, street food, and places to eat.' },
-  { slug: 'lifestyle', name: 'Lifestyle', description: 'Everyday discoveries and life between trips.' }
+  { slug: 'travel', name: 'Travel', description: 'Places, journeys, and stories from the road.', cover: '/gallery-uploads/lumbini.jpg' },
+  { slug: 'food', name: 'Food', description: 'Memorable meals, street food, and places to eat.', cover: '/uploads/dhal-bhat.jpg' },
+  { slug: 'lifestyle', name: 'Lifestyle', description: 'Everyday discoveries and life between trips.', cover: '/gallery-uploads/back.jpg' }
 ];
 const newsletterRecord = { name: 'newsletter', message: 'Newsletter subscriber' };
 const sessionSecret = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -243,6 +244,7 @@ function responsiveImageAttributes(src, sizes, large = false) {
 }
 app.locals.responsiveImageAttributes = responsiveImageAttributes;
 app.locals.articleImageSizes = articleImageSizes;
+app.locals.storyCoverSizes = storyCoverSizes;
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', 1);

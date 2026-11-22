@@ -22,15 +22,16 @@
   <meta name="twitter:description" content="<%= post.content.substring(0,150).replace(/\n/g,' ') %>">
   <% } %>
   <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/magazine.css">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 
 
 </head>
-<body>
+<body class="magazine magazine-article">
 
   <%- include('partials/nav') %>
 
-  <div class="post-layout-container">
+  <main class="post-layout-container magazine-wrap">
     <div class="post-main">
       <% if (isPreview) { %>
         <a href="/admin/edit/<%= post.id %>" class="back-link">← Back to editing</a>
@@ -39,14 +40,19 @@
         <a href="/blog" class="back-link">← Back to blog</a>
       <% } %>
 
-      <div class="post-header">
-        <div class="post-meta-row">
-          <span class="cat-badge cat-<%= post.category.toLowerCase() %>"><%= post.category %></span>
-          <span class="post-date"><%= post.date %></span>
-          <span class="post-read-time">⏱️ <%= readTime %> min read</span>
-          <% if (!isPreview) { %><span class="post-views">👁️ <%= post.views || 1 %> views</span><% } %>
-        </div>
+      <header class="post-header">
+        <% const currentTopic = topics.find(topic => topic.name === post.category); %>
+        <p class="magazine-kicker">
+          <% if (currentTopic) { %><a href="/topics/<%= currentTopic.slug %>"><%= currentTopic.name %></a>
+          <% } else { %><%= post.category %><% } %>
+        </p>
         <h1><%= post.title %></h1>
+        <% if (post.metaDescription) { %><p class="magazine-dek"><%= post.metaDescription %></p><% } %>
+        <div class="post-meta-row">
+          <span class="post-date"><%= post.date %></span>
+          <span class="post-read-time"><%= readTime %> min read</span>
+          <% if (!isPreview) { %><span class="post-views"><%= post.views || 1 %> views</span><% } %>
+        </div>
         <% if (post.tags.length > 0) { %>
           <div class="post-tags" style="justify-content:center">
             <% post.tags.forEach(t => { %>
@@ -54,14 +60,40 @@
             <% }) %>
           </div>
         <% } %>
-      </div>
+      </header>
 
       <% if (post.image) { %>
         <img src="<%= post.image %>" alt="<%= post.title %>" class="post-hero-img" fetchpriority="high"
-          <%- responsiveImageAttributes(post.image, articleImageSizes, true) %>>
+          <%- responsiveImageAttributes(post.image, storyCoverSizes, true) %>>
       <% } %>
 
       <div class="post-body"><%- renderContent(post.content) %></div>
+
+      <% if (generalRelated && generalRelated.length > 0) { %>
+        <section class="related-section" aria-labelledby="related-stories">
+          <h2 class="magazine-section-title" id="related-stories">Related stories</h2>
+          <div class="posts-grid magazine-cards">
+            <% generalRelated.forEach(r => { %>
+              <article class="post-card">
+                <% if (r.image) { %>
+                  <a href="/post/<%= r.slug %>"><img src="<%= r.image %>" alt="<%= r.title %>" class="post-card-img" loading="lazy" decoding="async"
+                    <%- responsiveImageAttributes(r.image, '(max-width: 640px) calc(100vw - 2rem), (max-width: 950px) 45vw, 290px') %>></a>
+                <% } else { %>
+                  <a href="/post/<%= r.slug %>"><div class="post-card-img-placeholder">📷</div></a>
+                <% } %>
+                <div class="post-card-body">
+                  <span class="cat-badge cat-<%= r.category.toLowerCase() %>"><%= r.category %></span>
+                  <h3><a href="/post/<%= r.slug %>"><%= r.title %></a></h3>
+                  <div class="post-card-footer">
+                    <span class="post-date"><%= r.date %></span>
+                    <a href="/post/<%= r.slug %>" class="post-link">Read →</a>
+                  </div>
+                </div>
+              </article>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
 
       <% if (!isPreview) { %>
       <div class="share-row">
@@ -79,7 +111,7 @@
   </div>
 
       <!-- ░░ COMMENTS SECTION ░░ -->
-      <div class="comments-section">
+      <div class="comments-section" id="comments">
         <h2 class="comments-title">
           💬 Comments
           <span class="comments-count"><%= post.comments ? post.comments.filter(c => c.approved !== false).length : 0 %></span>
@@ -143,32 +175,7 @@
       </div>
 
       <% } %>
-      <!-- Related posts (general, other categories included) -->
-      <% if (generalRelated && generalRelated.length > 0) { %>
-        <div class="related-section">
-          <h2 class="section-title">Related posts</h2>
-          <div class="posts-grid">
-            <% generalRelated.forEach(r => { %>
-              <article class="post-card">
-                <% if (r.image) { %>
-                  <a href="/post/<%= r.slug %>"><img src="<%= r.image %>" alt="<%= r.title %>" class="post-card-img" loading="lazy" decoding="async"
-                    <%- responsiveImageAttributes(r.image, '(max-width: 540px) calc(100vw - 3rem), 320px') %>></a>
-                <% } else { %>
-                  <a href="/post/<%= r.slug %>"><div class="post-card-img-placeholder">📷</div></a>
-                <% } %>
-                <div class="post-card-body">
-                  <span class="cat-badge cat-<%= r.category.toLowerCase() %>"><%= r.category %></span>
-                  <h3><a href="/post/<%= r.slug %>"><%= r.title %></a></h3>
-                  <div class="post-card-footer">
-                    <span class="post-date"><%= r.date %></span>
-                    <a href="/post/<%= r.slug %>" class="post-link">Read →</a>
-                  </div>
-                </div>
-              </article>
-            <% }) %>
-          </div>
-        </div>
-      <% } %>
+
     </div>
 
     <!-- ░░ SIDEBAR ░░ -->
@@ -213,7 +220,7 @@
       </div>
     </aside>
     <% } %>
-  </div>
+  </main>
 
   <!-- Back to top -->
   <%- include('partials/footer') %>
